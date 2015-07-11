@@ -13,8 +13,9 @@ weather_db = shelve.open(shelve_file)
 ob_ep = int(weather_db['current_response'][
     'current_observation']['observation_epoch'])
 if ob_ep + time_out < time.time():
+    if '/usr/self/bin' not in sys.path:
+        sys.path.append('/usr/self/bin')
     weather_db.close()
-    sys.path.append('/usr/self/bin')
     import getter
     getter.update()
     weather_db = shelve.open(shelve_file)
