@@ -7,7 +7,8 @@ import time
 
 time_out = 600
 
-shelve_file = '/usr/self/weather/june_weather'
+home_dir = '/usr/self/weather/'
+shelve_file = home_dir + time.strftime("%d%b%y") + "_weather"
 weather_db = shelve.open(shelve_file)
 
 ob_ep = int(weather_db['current_response'][

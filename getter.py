@@ -33,8 +33,10 @@ import shelve
 import pprint
 import argparse
 
-shelve_file = '/usr/self/weather/june_weather'
-config = '/usr/self/weather/jwunderground.json'
+# shelve_file = '/usr/self/weather/june_weather'
+home_dir = '/usr/self/weather/'
+shelve_file = home_dir + time.strftime("%d%b%y") + "_weather"
+config = home_dir + 'jwunderground.json'
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--verbose', '-v',
@@ -71,7 +73,8 @@ parser.add_argument('--conditions', '-c',
                     )
 parser.add_argument('--all', '-a',
                     action='store_true',
-                    help='return temperature, wind, humidity and sky conditions'
+                    help='return temperature, wind, ' +
+                    'humidity and sky conditions'
                     )
 parser.add_argument('--now', '-n',
                     action='store_true',
@@ -178,69 +181,94 @@ def update():
             pprint.pprint(keys)
 
 
+def print_current():
+    if args.all:
+        args.temperature = True
+        args.wind = True
+        args.humidity = True
+        args.conditions = True
+    if args.temperature or not (args.wind or
+                                args.humidity or
+                                args.conditions):
+        print("Temp: {}".format(weather_db['current_response']
+                                          ['current_observation']
+                                          ['temp_f']))
+    if args.wind:
+        print("Wind: {}".format(weather_db['current_response']
+                                          ['current_observation']
+                                          ['wind_string']))
+    if args.humidity:
+        print("Relative Humidity: {}".format(
+            weather_db['current_response']
+            ['current_observation']
+            ['relative_humidity']))
+    if args.conditions:
+        print("Sky: {}".format(weather_db['current_response']
+                                         ['current_observation']
+                                         ['weather']))
+
+
+def print_hourly():
+    for hour in weather_db['current_response']['hourly_forecast'][0:13]:
+        compound = "{:>9}, {:>2}:{:<2} {}".format(
+            hour['FCTTIME']['weekday_name'],
+            hour['FCTTIME']['hour'],
+            hour['FCTTIME']['min'],
+            hour['FCTTIME']['ampm'])
+        print("{:>19}  temp:{:>4}\tconditions: {}".format(
+            compound,
+            hour['temp']['english'],
+            hour['condition']))
+
+
+def print_forecast():
+    for day in (weather_db['current_response']
+                          ['forecast']
+                          ['simpleforecast']
+                          ['forecastday']):
+        print("{}, {} {}:\thigh of {}, low of {}, {}".format(
+            day['date']['weekday'],
+            day['date']['monthname'],
+            day['date']['day'],
+            day['high']['fahrenheit'],
+            day['low']['fahrenheit'],
+            day['conditions']))
+
+
+def print_bookkeeping():
+    if args.keys:
+        keys = list(weather_db.keys())
+        print("number of keys: {}".format(len(keys)))
+    if args.recent:
+        print("Latest call: {}".format(
+            time.ctime(float(weather_db['current_response']
+                                       ['current_observation']
+                                       ['observation_epoch']))))
+    if args.query:
+        print("re-query possible in {} seconds".format(
+            time_out - response_age()))
+
 if __name__ == '__main__':
     """ Hooray, a giant if-elif-else tree!
     """
     try:
         if args.update:
+            args.verbose = True
             update()
-        if args.keys:
-            keys = list(weather_db.keys())
-            print("number of keys: {}".format(len(keys)))
-        if args.recent:
-            print("Latest call: {}".format(time.ctime(float(weather_db
-                                                      ['current_response']
-                                                      ['current_observation']
-                                                      ['observation_epoch']))))
-        if args.query:
-            print("re-query possible in {} seconds".format(
-                time_out - response_age()))
-        if args.all:
-            args.temperature = True
-            args.wind = True
-            args.humidity = True
-            args.conditions = True
-        if args.now or not (args.hourly or args.forecast):
-            if args.temperature or not (args.wind or
-                                        args.humidity or
-                                        args.conditions):
-                print("Temp: {}".format(weather_db['current_response']
-                                                  ['current_observation']
-                                                  ['temp_f']))
-            if args.wind:
-                print("Wind: {}".format(weather_db['current_response']
-                                                  ['current_observation']
-                                                  ['wind_string']))
-            if args.humidity:
-                print("Relative Humidity: {}".format(weather_db['current_response']
-                                                               ['current_observation']
-                                                               ['relative_humidity']))
-            if args.conditions:
-                print("Sky: {}".format(weather_db['current_response']
-                                                 ['current_observation']
-                                                 ['weather']))
+        elif (args.keys or args.recent or args.query):
+            print_bookkeeping()
+        elif args.now or not (args.hourly or args.forecast):
+            print_current()
         elif args.hourly:
-            for hour in weather_db['current_response']['hourly_forecast'][0:13]:
-                compound = "{:>9}, {:>2}:{:<2} {}".format(hour['FCTTIME']['weekday_name'],
-                                           hour['FCTTIME']['hour'],
-                                           hour['FCTTIME']['min'],
-                                           hour['FCTTIME']['ampm'])
-                print("{:>19}  temp:{:>4}\tconditions: {}".format(compound,
-                    hour['temp']['english'],
-                    hour['condition']))
+            print_hourly()
         elif args.forecast:
-            for day in (weather_db['current_response']
-                                  ['forecast']
-                                  ['simpleforecast']
-                                  ['forecastday']):
-                print("{}, {} {}:\thigh of {}, low of {}, {}".format(
-                    day['date']['weekday'],
-                    day['date']['monthname'],
-                    day['date']['day'],
-                    day['high']['fahrenheit'],
-                    day['low']['fahrenheit'],
-                    day['conditions']))
+            print_forecast()
         else:
             update()
+    # here we'll put an `except` for key errors, but we'll need a way to:
+    #       1. call the update() and...
+    #       2. rerun the if/elif tree, which means...
+    #       3 chopping down the elif tree!
+    # except:
     finally:
         weather_db.close()
