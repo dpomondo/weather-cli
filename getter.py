@@ -200,8 +200,8 @@ def print_current():
     if args.humidity:
         print("Relative Humidity: {}".format(
             weather_db['current_response']
-            ['current_observation']
-            ['relative_humidity']))
+                      ['current_observation']
+                      ['relative_humidity']))
     if args.conditions:
         print("Sky: {}".format(weather_db['current_response']
                                          ['current_observation']
@@ -251,24 +251,37 @@ def print_bookkeeping():
 if __name__ == '__main__':
     """ Hooray, a giant if-elif-else tree!
     """
-    try:
-        if args.update:
-            args.verbose = True
+    # TODO:     1. open shelve file here
+    #           2. check to see if there IS a current response key
+    #           3. put open/close shelve in update so it can be called
+    #              seperately
+    loop_flag = True
+    while loop_flag is True:
+        try:
+            if args.update:
+                args.verbose = True
+                update()
+                loop_flag = False
+            elif (args.keys or args.recent or args.query):
+                print_bookkeeping()
+                loop_flag = False
+            elif args.now or not (args.hourly or args.forecast):
+                print_current()
+                loop_flag = False
+            elif args.hourly:
+                print_hourly()
+                loop_flag = False
+            elif args.forecast:
+                print_forecast()
+                loop_flag = False
+            else:
+                update()
+                loop_flag = False
+        # here we'll put an `except` for key errors, but we'll need a way to:
+        #       1. call the update() and...
+        #       2. rerun the if/elif tree, which means...
+        #       3 chopping down the elif tree!
+        except KeyError:
             update()
-        elif (args.keys or args.recent or args.query):
-            print_bookkeeping()
-        elif args.now or not (args.hourly or args.forecast):
-            print_current()
-        elif args.hourly:
-            print_hourly()
-        elif args.forecast:
-            print_forecast()
-        else:
-            update()
-    # here we'll put an `except` for key errors, but we'll need a way to:
-    #       1. call the update() and...
-    #       2. rerun the if/elif tree, which means...
-    #       3 chopping down the elif tree!
-    # except:
-    finally:
-        weather_db.close()
+        finally:
+            weather_db.close()
