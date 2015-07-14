@@ -92,6 +92,10 @@ parser.add_argument('--update', '-u',
                     action='store_true',
                     help='force update of weather conditions database'
                     )
+parser.add_argument('--moon',
+                    action='store_true',
+                    help='return sunrise and sunset'
+                    )
 
 args = parser.parse_args()
 
@@ -135,8 +139,9 @@ def make_url():
 
 def response_age():
     if 'current_response' in weather_db:
-        res = weather_db[
-            'current_response']['current_observation']['observation_epoch']
+        res = (weather_db['current_response']
+                         ['current_observation']
+                         ['observation_epoch'])
         return int(time.time()) - int(res)
     else:
         return time_out + 1
@@ -173,6 +178,8 @@ def update():
         if args.verbose:
             print('Function returned this:')
             pprint.pprint(now.keys())
+    # umm... the whole thig breaks if the server send back the wrong thing?
+    if 'current_observation' in now:
         weather_db['current_response'] = now
         weather_db[now['current_observation']['observation_epoch']] = now
         if args.verbose:
@@ -182,6 +189,10 @@ def update():
 
 
 def print_current():
+    return_current = []
+    temp_colors = ";".join([str(1), str(34), str(47)])
+    color_code = "\033[{}m".format(temp_colors)
+    color_clear = "\033[0m"
     if args.all:
         args.temperature = True
         args.wind = True
@@ -190,24 +201,61 @@ def print_current():
     if args.temperature or not (args.wind or
                                 args.humidity or
                                 args.conditions):
-        print("Temp: {}".format(weather_db['current_response']
-                                          ['current_observation']
-                                          ['temp_f']))
+        return_current.append("{}: {}{}{}".format(
+                                            "Temp",
+                                            color_code,
+                                            weather_db['current_response']
+                                                      ['current_observation']
+                                                      ['temp_f'],
+                                            color_clear))
     if args.wind:
-        print("Wind: {}".format(weather_db['current_response']
-                                          ['current_observation']
-                                          ['wind_string']))
+        return_current.append("{}: {}{}{}".format("Wind", 
+                                                "\033[38;5;199m\033[48;5;157m",
+                                                weather_db['current_response']
+                                                          ['current_observation']
+                                                          ['wind_string'],
+                                                color_clear))
     if args.humidity:
-        print("Relative Humidity: {}".format(
-            weather_db['current_response']
-                      ['current_observation']
-                      ['relative_humidity']))
+        return_current.append("{}: {}{}{}".format("Relative Humidity",
+                                                color_code,
+                                                weather_db['current_response']
+                                                          ['current_observation']
+                                                          ['relative_humidity'],
+                                                color_clear))
     if args.conditions:
-        print("Sky: {}".format(weather_db['current_response']
-                                         ['current_observation']
-                                         ['weather']))
+        return_current.append("{}: {}{}{}".format("Sky",
+                                                color_code,
+                                                weather_db['current_response']
+                                                          ['current_observation']
+                                                          ['weather'],
+                                                color_clear))
+    for lin in return_current:
+        print(lin)
 
 
+def print_moon():
+    temp = []
+    words = ["Moon Phase", "Sunrise", "Sunset"]
+    words_max = max(list(len(z) for z in words))
+    words_fixed = []
+    for w in words:
+        z = w
+        while len(z) < words_max:
+            z = " " + z
+        words_fixed.append(z)
+    temp.append("{}: {}".format(words_fixed[0], weather_db['current_response']
+        ['moon_phase']['phaseofMoon']))
+    temp.append("{}: {}:{}".format(words_fixed[1],
+        weather_db['current_response']['moon_phase']['sunrise']['hour'],
+        weather_db['current_response']['moon_phase']['sunrise']['minute']))
+    temp.append("{}: {}:{}".format(words_fixed[2],
+        weather_db['current_response']['moon_phase']['sunset']['hour'],
+        weather_db['current_response']['moon_phase']['sunset']['minute']))
+    for lin in temp:
+        print(lin)
+
+
+    
 def print_hourly():
     for hour in weather_db['current_response']['hourly_forecast'][0:13]:
         compound = "{:>9}, {:>2}:{:<2} {}".format(
@@ -261,6 +309,9 @@ if __name__ == '__main__':
             if args.update:
                 args.verbose = True
                 update()
+                loop_flag = False
+            elif args.moon:
+                print_moon()
                 loop_flag = False
             elif (args.keys or args.recent or args.query):
                 print_bookkeeping()
