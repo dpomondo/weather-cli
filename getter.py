@@ -95,6 +95,8 @@ parser.add_argument('--update', '-u',
 
 args = parser.parse_args()
 
+weather_db = shelve.open(shelve_file)
+
 with open(config, 'r') as infile:
     temp = json.load(infile)
 
@@ -132,11 +134,9 @@ def make_url():
 
 
 def response_age():
-    """ returns time since last request.
-        Requires weather_db to be opened
-        """
-    if 'current_observation' in current:
-        res = current['current_observation']['observation_epoch']
+    if 'current_response' in weather_db:
+        res = weather_db[
+            'current_response']['current_observation']['observation_epoch']
         return int(time.time()) - int(res)
     else:
         return time_out + 1
@@ -144,7 +144,7 @@ def response_age():
 
 def get_response():
     """ Fill the current_response object with the json returned
-        from the website
+    from the website
     """
     if args.verbose:
         print("Getting response from the server...")
@@ -168,7 +168,6 @@ def get_response():
 
 def update():
     # do the thing
-    weather_db = shelve.open(shelve_file)
     now = get_response()
     if now is not None:
         if args.verbose:
@@ -180,7 +179,6 @@ def update():
             keys = list(weather_db.keys())
             print("weather_db has the following keys:")
             pprint.pprint(keys)
-    weather_db.close()
 
 
 def print_current():
@@ -192,22 +190,31 @@ def print_current():
     if args.temperature or not (args.wind or
                                 args.humidity or
                                 args.conditions):
-        print("Temp: {}".format(current['current_observation']['temp_f']))
+        print("Temp: {}".format(weather_db['current_response']
+                                          ['current_observation']
+                                          ['temp_f']))
     if args.wind:
-        print("Wind: {}".format(current['current_observation']['wind_string']))
+        print("Wind: {}".format(weather_db['current_response']
+                                          ['current_observation']
+                                          ['wind_string']))
     if args.humidity:
         print("Relative Humidity: {}".format(
-            current['current_observation']['relative_humidity']))
+            weather_db['current_response']
+                      ['current_observation']
+                      ['relative_humidity']))
     if args.conditions:
-        print("Sky: {}".format(current['current_observation']['weather']))
+        print("Sky: {}".format(weather_db['current_response']
+                                         ['current_observation']
+                                         ['weather']))
 
 
 def print_hourly():
-    for hour in current['hourly_forecast'][0:13]:
-        compound = "{:>9}, {:>2}:{:<2}".format(
+    for hour in weather_db['current_response']['hourly_forecast'][0:13]:
+        compound = "{:>9}, {:>2}:{:<2} {}".format(
             hour['FCTTIME']['weekday_name'],
             hour['FCTTIME']['hour'],
-            hour['FCTTIME']['min'])
+            hour['FCTTIME']['min'],
+            hour['FCTTIME']['ampm'])
         print("{:>19}  temp:{:>4}\tconditions: {}".format(
             compound,
             hour['temp']['english'],
@@ -215,7 +222,10 @@ def print_hourly():
 
 
 def print_forecast():
-    for day in (current['forecast']['simpleforecast']['forecastday']):
+    for day in (weather_db['current_response']
+                          ['forecast']
+                          ['simpleforecast']
+                          ['forecastday']):
         print("{}, {} {}:\thigh of {}, low of {}, {}".format(
             day['date']['weekday'],
             day['date']['monthname'],
@@ -226,18 +236,17 @@ def print_forecast():
 
 
 def print_bookkeeping():
-    weather_db = shelve.open(shelve_file)
     if args.keys:
         keys = list(weather_db.keys())
         print("number of keys: {}".format(len(keys)))
     if args.recent:
         print("Latest call: {}".format(
-            time.ctime(float(current['current_observation']
-                                    ['observation_epoch']))))
+            time.ctime(float(weather_db['current_response']
+                                       ['current_observation']
+                                       ['observation_epoch']))))
     if args.query:
         print("re-query possible in {} seconds".format(
             time_out - response_age()))
-    weather_db.close()
 
 if __name__ == '__main__':
     """ Hooray, a giant if-elif-else tree!
@@ -246,13 +255,6 @@ if __name__ == '__main__':
     #           2. check to see if there IS a current response key
     #           3. put open/close shelve in update so it can be called
     #              seperately
-    weather_db = shelve.open(shelve_file)
-    if 'current_response' not in weather_db:
-        update()
-    else:
-        current = weather_db['current_response']
-    weather_db.close()
-
     loop_flag = True
     while loop_flag is True:
         try:
@@ -281,5 +283,5 @@ if __name__ == '__main__':
         #       3 chopping down the elif tree!
         except KeyError:
             update()
-        # finally:
-            # weather_db.close()
+        finally:
+            weather_db.close()
