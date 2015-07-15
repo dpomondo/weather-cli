@@ -96,6 +96,14 @@ parser.add_argument('--moon',
                     action='store_true',
                     help='return sunrise and sunset'
                     )
+parser.add_argument('--options', '-p',
+                    action='store_true',
+                    help='look at local options'
+                    )
+parser.add_argument('--debug',
+                    action='store_true',
+                    help='print out current server response'
+                    )
 
 args = parser.parse_args()
 
@@ -188,6 +196,27 @@ def update():
             pprint.pprint(keys)
 
 
+def key_printer(dic):
+    results = []
+    new_len = 1 
+    for k in dic:
+        if 1 + len(k) > new_len:
+            new_len = len(k) + 1
+    for key in dic.keys():
+        if isinstance(dic[key], dict):
+            temp = key_printer(dic[key])
+            results.append("{}:{:<{width}}".format(key, " ",
+                                                   width=(new_len-len(key))))
+            if len(temp) > 0:
+                results[-1] += temp[0]
+                for t in temp[1:]:
+                    results.append((" " + " " * new_len) + t)
+        else:
+            results.append("{}:{:<{width}}{}".format(key, " ", dic[key],
+                                                     width=new_len-len(key)))
+    return results
+
+
 def print_current():
     return_current = []
     temp_colors = ";".join([str(1), str(34), str(47)])
@@ -237,20 +266,17 @@ def print_moon():
     temp = []
     words = ["Moon Phase", "Sunrise", "Sunset"]
     words_max = max(list(len(z) for z in words))
-    words_fixed = []
-    for w in words:
-        z = w
-        while len(z) < words_max:
-            z = " " + z
-        words_fixed.append(z)
-    temp.append("{}: {}".format(words_fixed[0], weather_db['current_response']
-        ['moon_phase']['phaseofMoon']))
-    temp.append("{}: {}:{}".format(words_fixed[1],
+    temp.append("{:>{width}}: {}".format(words[0], 
+        weather_db['current_response']['moon_phase']['phaseofMoon'],
+        width=words_max))
+    temp.append("{:>{width}}: {}:{}".format(words[1],
         weather_db['current_response']['moon_phase']['sunrise']['hour'],
-        weather_db['current_response']['moon_phase']['sunrise']['minute']))
-    temp.append("{}: {}:{}".format(words_fixed[2],
+        weather_db['current_response']['moon_phase']['sunrise']['minute'], 
+        width=words_max))
+    temp.append("{:>{width}}: {}:{}".format(words[2],
         weather_db['current_response']['moon_phase']['sunset']['hour'],
-        weather_db['current_response']['moon_phase']['sunset']['minute']))
+        weather_db['current_response']['moon_phase']['sunset']['minute'],
+        width=words_max))
     for lin in temp:
         print(lin)
 
@@ -309,6 +335,17 @@ if __name__ == '__main__':
             if args.update:
                 args.verbose = True
                 update()
+                loop_flag = False
+            elif args.options:
+                res = key_printer(temp)
+                for r in res:
+                    print(r)
+                loop_flag = False
+            elif args.debug:
+                res = key_printer(weather_db['current_response']
+                                            ['current_observation'])
+                for r in res:
+                    print(r)
                 loop_flag = False
             elif args.moon:
                 print_moon()
