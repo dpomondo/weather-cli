@@ -197,23 +197,27 @@ def update():
 
 
 def key_printer(dic):
+    key_color = '\033[38;5;214m'
+    val_color = '\033[38;5;056m'
+    end_color = '\033[0m'
     results = []
-    new_len = 1 
+    new_len = 1
     for k in dic:
         if 1 + len(k) > new_len:
             new_len = len(k) + 1
-    for key in dic.keys():
+    for key in sorted(dic.keys()):
         if isinstance(dic[key], dict):
+            # remember kids: recursion is cool
             temp = key_printer(dic[key])
-            results.append("{}:{:<{width}}".format(key, " ",
-                                                   width=(new_len-len(key))))
+            results.append("{}{}:{:<{width}}{}".format(key_color, key, " ",
+                    end_color, width=(new_len-len(key))))
             if len(temp) > 0:
                 results[-1] += temp[0]
                 for t in temp[1:]:
                     results.append((" " + " " * new_len) + t)
         else:
-            results.append("{}:{:<{width}}{}".format(key, " ", dic[key],
-                                                     width=new_len-len(key)))
+            results.append("{}{}:{:<{width}}{}{}{}".format(key_color, key, " ",
+                val_color, dic[key], end_color, width=new_len-len(key)))
     return results
 
 
@@ -222,11 +226,32 @@ def print_current():
     temp_colors = ";".join([str(1), str(34), str(47)])
     color_code = "\033[{}m".format(temp_colors)
     color_clear = "\033[0m"
+    current_dic = {"Temp":  {'arg': args.temperature,
+                             'key': 'temp_f',
+                             'col': "\033[1;34;47m"},
+                   "Wind":  {'arg': args.wind,
+                             'key': 'wind_string',
+                             'col': "\033[38;5;199m\033[48;5;157m"},
+                   "Relative Humidity":
+                            {'arg': args.humidity,
+                             'key': 'relative_humidity',
+                             'col': "\033[1;34;47m"},
+                    "Sky":  {'arg': args.conditions,
+                             'key': 'weather',
+                             'col': '\033[1;34;47m'}
+                  }
     if args.all:
         args.temperature = True
         args.wind = True
         args.humidity = True
         args.conditions = True
+    _lis, _lines = [], []
+    for k in current_dic:
+        if current_dic[k]['arg'] is True:
+            _lis.append(k)
+    _lis.sort()
+
+    # and below here is what's getting changed up:
     if args.temperature or not (args.wind or
                                 args.humidity or
                                 args.conditions):
@@ -238,7 +263,7 @@ def print_current():
                                                       ['temp_f'],
                                             color_clear))
     if args.wind:
-        return_current.append("{}: {}{}{}".format("Wind", 
+        return_current.append("{}: {}{}{}".format("Wind",
                                                 "\033[38;5;199m\033[48;5;157m",
                                                 weather_db['current_response']
                                                           ['current_observation']
@@ -266,12 +291,12 @@ def print_moon():
     temp = []
     words = ["Moon Phase", "Sunrise", "Sunset"]
     words_max = max(list(len(z) for z in words))
-    temp.append("{:>{width}}: {}".format(words[0], 
+    temp.append("{:>{width}}: {}".format(words[0],
         weather_db['current_response']['moon_phase']['phaseofMoon'],
         width=words_max))
     temp.append("{:>{width}}: {}:{}".format(words[1],
         weather_db['current_response']['moon_phase']['sunrise']['hour'],
-        weather_db['current_response']['moon_phase']['sunrise']['minute'], 
+        weather_db['current_response']['moon_phase']['sunrise']['minute'],
         width=words_max))
     temp.append("{:>{width}}: {}:{}".format(words[2],
         weather_db['current_response']['moon_phase']['sunset']['hour'],
@@ -281,7 +306,6 @@ def print_moon():
         print(lin)
 
 
-    
 def print_hourly():
     for hour in weather_db['current_response']['hourly_forecast'][0:13]:
         compound = "{:>9}, {:>2}:{:<2} {}".format(
