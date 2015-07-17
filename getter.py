@@ -9,7 +9,7 @@
 #
 # -----------------------------------------------------------------------------
 #
-# TODO:     1. Add method for making daily database file
+# TODO:     1. Add method for making daily database file -- DONE
 #               a. include method for clearing out old files
 #           2. add configuration file (ability to save preferred printing
 #              format)
@@ -28,10 +28,10 @@ import sys
 import requests
 import time
 import json
-import shelve
+import argparse
 # kill the following:
 import pprint
-import argparse
+import shelve
 
 # shelve_file = '/usr/self/weather/june_weather'
 home_dir = '/usr/self/weather/'
@@ -226,20 +226,31 @@ def print_current():
     temp_colors = ";".join([str(1), str(34), str(47)])
     color_code = "\033[{}m".format(temp_colors)
     color_clear = "\033[0m"
-    current_dic = {"Temp":  {'arg': args.temperature,
-                             'key': 'temp_f',
-                             'col': "\033[1;34;47m"},
-                   "Wind":  {'arg': args.wind,
-                             'key': 'wind_string',
-                             'col': "\033[38;5;199m\033[48;5;157m"},
-                   "Relative Humidity":
-                            {'arg': args.humidity,
-                             'key': 'relative_humidity',
-                             'col': "\033[1;34;47m"},
-                    "Sky":  {'arg': args.conditions,
-                             'key': 'weather',
-                             'col': '\033[1;34;47m'}
+    current_dic = {"1Temp":  {'arg': 'temperature',
+                              'nam': "Temp",
+                              'key': 'temp_f',
+                              'col': "\033[1;34;47m"},
+                   "2Wind":  {'arg': 'wind',
+                              'nam': "Wind",
+                              'key': 'wind_string',
+                              'col': "\033[38;5;199m\033[48;5;157m"},
+                   "3Relative Humidity":
+                             {'arg': 'humidity',
+                              'nam': "Humidity",
+                              'key': 'relative_humidity',
+                              'col': "\033[2;34m"},
+                   "4Sky":   {'arg': 'conditions',
+                              'nam': "Conditions",
+                              'key': 'weather',
+                              'col': '\033[3;36;47m'}
                   }
+    # make sure SOMETHING gets printed:
+    if not (args.wind or
+            args.humidity or
+            args.conditions or
+            args.temperature or
+            args.all):
+        args.temperature = True
     if args.all:
         args.temperature = True
         args.wind = True
@@ -247,42 +258,29 @@ def print_current():
         args.conditions = True
     _lis, _lines = [], []
     for k in current_dic:
-        if current_dic[k]['arg'] is True:
+        if getattr(args, current_dic[k]['arg']) is True:
             _lis.append(k)
     _lis.sort()
+    # debug line!
+    if args.debug:
+        print("list of keys to print: " + str(_lis))
+    width = max(list(len(item) for item in list(current_dic[k]['nam'] for k in
+        _lis)))
+    # print("width:\t" + str(width), type(width))
 
     # and below here is what's getting changed up:
-    if args.temperature or not (args.wind or
-                                args.humidity or
-                                args.conditions):
-        return_current.append("{}: {}{}{}".format(
-                                            "Temp",
-                                            color_code,
+    for key in _lis:
+        color_code = current_dic[key]['col']
+        return_current.append("{}:{}{:<{width}}{}{}".format(
+                                            current_dic[key]['nam'], 
+                                            color_code, 
+                                            " ",
                                             weather_db['current_response']
                                                       ['current_observation']
-                                                      ['temp_f'],
-                                            color_clear))
-    if args.wind:
-        return_current.append("{}: {}{}{}".format("Wind",
-                                                "\033[38;5;199m\033[48;5;157m",
-                                                weather_db['current_response']
-                                                          ['current_observation']
-                                                          ['wind_string'],
-                                                color_clear))
-    if args.humidity:
-        return_current.append("{}: {}{}{}".format("Relative Humidity",
-                                                color_code,
-                                                weather_db['current_response']
-                                                          ['current_observation']
-                                                          ['relative_humidity'],
-                                                color_clear))
-    if args.conditions:
-        return_current.append("{}: {}{}{}".format("Sky",
-                                                color_code,
-                                                weather_db['current_response']
-                                                          ['current_observation']
-                                                          ['weather'],
-                                                color_clear))
+                                                      [current_dic[key]['key']],
+                                            color_clear,
+                                            width=width - len(
+                                                current_dic[key]['nam']) + 1))
     for lin in return_current:
         print(lin)
 
