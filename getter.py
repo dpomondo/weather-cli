@@ -30,96 +30,84 @@ import time
 import json
 import argparse
 # kill the following:
-import pprint
 import shelve
 
-# shelve_file = '/usr/self/weather/june_weather'
-home_dir = '/usr/self/weather/'
-shelve_file = home_dir + time.strftime("%d%b%y") + "_weather"
-config = home_dir + 'jwunderground.json'
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--verbose', '-v',
-                    action='store_true',
-                    help='verbose flag'
-                    )
-parser.add_argument('--keys', '-k',
-                    action='store_true',
-                    help='number of keys in database'
-                    )
-parser.add_argument('--recent', '-r',
-                    action='store_true',
-                    help='time of most recent call'
-                    )
-parser.add_argument('--query', '--requery', '-q',
-                    action='store_true',
-                    help='time until next re-query'
-                    )
-parser.add_argument('--temperature', '-t',
-                    action='store_true',
-                    help='return current temperature in fahrenheit'
-                    )
-parser.add_argument('--wind', '-w',
-                    action='store_true',
-                    help='return current wind speed and direction'
-                    )
-parser.add_argument('--humidity', '-m',
-                    action='store_true',
-                    help='return current humidity'
-                    )
-parser.add_argument('--conditions', '-c',
-                    action='store_true',
-                    help='return current conditions'
-                    )
-parser.add_argument('--all', '-a',
-                    action='store_true',
-                    help='return temperature, wind, ' +
-                    'humidity and sky conditions'
-                    )
-parser.add_argument('--now', '-n',
-                    action='store_true',
-                    help='return conditions as they are now'
-                    )
-parser.add_argument('--hourly', '-o',
-                    action='store_true',
-                    help='return hourly forecast'
-                    )
-parser.add_argument('--forecast', '-f',
-                    action='store_true',
-                    help='return 10 day forecast'
-                    )
-parser.add_argument('--update', '-u',
-                    action='store_true',
-                    help='force update of weather conditions database'
-                    )
-parser.add_argument('--moon',
-                    action='store_true',
-                    help='return sunrise and sunset'
-                    )
-parser.add_argument('--options', '-p',
-                    action='store_true',
-                    help='look at local options'
-                    )
-parser.add_argument('--debug',
-                    action='store_true',
-                    help='print out current server response'
-                    )
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--verbose', '-v',
+                        action='store_true',
+                        help='verbose flag'
+                        )
+    parser.add_argument('--keys', '-k',
+                        action='store_true',
+                        help='number of keys in database'
+                        )
+    parser.add_argument('--recent', '-r',
+                        action='store_true',
+                        help='time of most recent call'
+                        )
+    parser.add_argument('--query', '--requery', '-q',
+                        action='store_true',
+                        help='time until next re-query'
+                        )
+    parser.add_argument('--temperature', '-t',
+                        action='store_true',
+                        help='return current temperature in fahrenheit'
+                        )
+    parser.add_argument('--wind', '-w',
+                        action='store_true',
+                        help='return current wind speed and direction'
+                        )
+    parser.add_argument('--humidity', '-m',
+                        action='store_true',
+                        help='return current humidity'
+                        )
+    parser.add_argument('--conditions', '-c',
+                        action='store_true',
+                        help='return current conditions'
+                        )
+    parser.add_argument('--all', '-a',
+                        action='store_true',
+                        help='return temperature, wind, ' +
+                        'humidity and sky conditions'
+                        )
+    parser.add_argument('--now', '-n',
+                        action='store_true',
+                        help='return conditions as they are now'
+                        )
+    parser.add_argument('--hourly', '-o',
+                        action='store_true',
+                        help='return hourly forecast'
+                        )
+    parser.add_argument('--forecast', '-f',
+                        action='store_true',
+                        help='return 10 day forecast'
+                        )
+    parser.add_argument('--update', '-u',
+                        action='store_true',
+                        help='force update of weather conditions database'
+                        )
+    parser.add_argument('--moon',
+                        action='store_true',
+                        help='return sunrise and sunset'
+                        )
+    parser.add_argument('--options', '-p',
+                        action='store_true',
+                        help='look at local options'
+                        )
+    parser.add_argument('--debug',
+                        action='store_true',
+                        help='print out current server response'
+                        )
 
-args = parser.parse_args()
-
-weather_db = shelve.open(shelve_file)
-
-with open(config, 'r') as infile:
-    temp = json.load(infile)
-
-url = temp['url']
-req_keys = temp['req_keys']
-api = temp['api']
-time_out = int(temp.get('time_out', 600))
-params = temp.get('params', None)
+    return parser.parse_args()
 
 
-def make_url():
+def make_url(**temp):
+    url = temp['url']
+    req_keys = temp['req_keys']
+    api = temp['api']
     if not url.startswith('http://'):
         res = "{}{}".format("http://", url)
     else:
@@ -155,42 +143,62 @@ def response_age():
         return time_out + 1
 
 
-def get_response():
+def get_response(verbose=False, check_time=True, time_out=600, **kwargs):
     """ Fill the current_response object with the json returned
     from the website
     """
-    if args.verbose:
+    import pprint
+    if verbose:
         print("Getting response from the server...")
-    if time_out:
+    if time_out and check_time:
         if response_age() < time_out:
             if args.verbose:
                 print("re-query too soon.")
                 print("re-query possible in {} seconds".format(
                     time_out - response_age()))
             return
-    r = requests.get(make_url(), params=params)
+    params = kwargs.get('params', None)
+    r = requests.get(make_url(**kwargs), params=params)
     if sys.version_info[1] < 4:
         current_response = r.json
     else:
         current_response = r.json()
-    if args.verbose:
+    if verbose:
         print('Response keys:')
         pprint.pprint(current_response.keys())
     return current_response
 
 
-def update():
+def update(weather_db, verbose=False, check_time=True):
     # do the thing
-    now = get_response()
-    if now is not None:
-        if args.verbose:
+    # this is a very crummy emergency solution:
+    home_dir = '/usr/self/weather/'
+    config = home_dir + 'jwunderground.json'
+    temp = load_vars(config=config)
+    url = temp['url']
+    req_keys = temp['req_keys']
+    api = temp['api']
+    time_out = int(temp.get('time_out', 600))
+
+    import pprint
+    now = get_response(verbose=verbose, check_time=check_time,
+            time_out=time_out, **temp)
+    # umm... the whole thing breaks if the server sends back the wrong thing?
+    if now is not None and 'current_observation' in now:
+        if verbose:
             print('Function returned this:')
             pprint.pprint(now.keys())
-    # umm... the whole thig breaks if the server send back the wrong thing?
-    if 'current_observation' in now:
         weather_db['current_response'] = now
         weather_db[now['current_observation']['observation_epoch']] = now
-        if args.verbose:
+        # for some reason, trying to dump `now['current_response']` to the json
+        # file RECALLS this function, looping & crashing the whole thing
+        nerd = {}
+        for key in now:
+            nerd[key] = now[key]
+        with open(day_file_name() + ".json", "w") as outfile:
+            json.dump(nerd, outfile)
+        del(nerd)
+        if verbose:
             keys = list(weather_db.keys())
             print("weather_db has the following keys:")
             pprint.pprint(keys)
@@ -243,7 +251,7 @@ def print_current():
                               'nam': "Conditions",
                               'key': 'weather',
                               'col': '\033[3;36;47m'}
-                  }
+                   }
     # make sure SOMETHING gets printed:
     if not (args.wind or
             args.humidity or
@@ -256,7 +264,7 @@ def print_current():
         args.wind = True
         args.humidity = True
         args.conditions = True
-    _lis, _lines = [], []
+    _lis = []
     for k in current_dic:
         if getattr(args, current_dic[k]['arg']) is True:
             _lis.append(k)
@@ -344,6 +352,19 @@ def print_bookkeeping():
         print("re-query possible in {} seconds".format(
             time_out - response_age()))
 
+
+def load_vars(config):
+    with open(config, 'r') as infile:
+        temp = json.load(infile)
+    return temp
+
+
+def day_file_name():
+    home_dir = '/usr/self/weather/'
+    temp = home_dir + time.strftime("%d%b%y") + "_weather"
+    return temp
+
+
 if __name__ == '__main__':
     """ Hooray, a giant if-elif-else tree!
     """
@@ -351,12 +372,24 @@ if __name__ == '__main__':
     #           2. check to see if there IS a current response key
     #           3. put open/close shelve in update so it can be called
     #              seperately
+    # -------------------------------------------------------------------------
+    # init variables
+    # -------------------------------------------------------------------------
+    # shelve_file = '/usr/self/weather/june_weather'
+    home_dir = '/usr/self/weather/'
+    shelve_file = home_dir + time.strftime("%d%b%y") + "_weather"
+    config = home_dir + 'jwunderground.json'
+    weather_db = shelve.open(shelve_file)
+
     loop_flag = True
+
+    args = parse_arguments()
+
     while loop_flag is True:
         try:
             if args.update:
                 args.verbose = True
-                update()
+                update(weather_db, verbose=args.verbose, check_time=True)
                 loop_flag = False
             elif args.options:
                 res = key_printer(temp)
@@ -385,13 +418,13 @@ if __name__ == '__main__':
                 print_forecast()
                 loop_flag = False
             else:
-                update()
+                update(weather_db, verbose=args.verbose)
                 loop_flag = False
         # here we'll put an `except` for key errors, but we'll need a way to:
         #       1. call the update() and...
         #       2. rerun the if/elif tree, which means...
         #       3 chopping down the elif tree!
         except KeyError:
-            update()
+            update(weather_db, verbose=args.verbose)
         finally:
             weather_db.close()
