@@ -140,7 +140,11 @@ def response_age():
                          ['observation_epoch'])
         return int(time.time()) - int(res)
     else:
-        return time_out + 1
+        # without gloabl variables this line fails
+        # return time_out + 1
+        #
+        # this is a bad bad hacky thing
+        return 601
 
 
 def get_response(verbose=False, check_time=True, time_out=600, **kwargs):
@@ -196,7 +200,7 @@ def update(weather_db, verbose=False, check_time=True):
         for key in now:
             nerd[key] = now[key]
         with open(day_file_name() + ".json", "w") as outfile:
-            json.dump(nerd, outfile)
+            json.dump(nerd, outfile, indent=4)
         del(nerd)
         if verbose:
             keys = list(weather_db.keys())
@@ -350,7 +354,8 @@ def print_bookkeeping():
                                        ['observation_epoch']))))
     if args.query:
         print("re-query possible in {} seconds".format(
-            time_out - response_age()))
+            # time_out - response_age()))
+            600 - response_age()))
 
 
 def load_vars(config):
@@ -368,18 +373,19 @@ def day_file_name():
 if __name__ == '__main__':
     """ Hooray, a giant if-elif-else tree!
     """
-    # TODO:     1. open shelve file here
-    #           2. check to see if there IS a current response key
-    #           3. put open/close shelve in update so it can be called
+    # TODO:     1. move ALL this junk to main(), call from here
+    #           2. open shelve file here
+    #           3. check to see if there IS a current response key
+    #           4. put open/close shelve in update so it can be called
     #              seperately
     # -------------------------------------------------------------------------
     # init variables
     # -------------------------------------------------------------------------
     # shelve_file = '/usr/self/weather/june_weather'
     home_dir = '/usr/self/weather/'
-    shelve_file = home_dir + time.strftime("%d%b%y") + "_weather"
+    # shelve_file = home_dir + time.strftime("%d%b%y") + "_weather"
     config = home_dir + 'jwunderground.json'
-    weather_db = shelve.open(shelve_file)
+    weather_db = shelve.open(day_file_name())
 
     loop_flag = True
 
@@ -392,6 +398,7 @@ if __name__ == '__main__':
                 update(weather_db, verbose=args.verbose, check_time=True)
                 loop_flag = False
             elif args.options:
+                temp = load_vars(config)
                 res = key_printer(temp)
                 for r in res:
                     print(r)
