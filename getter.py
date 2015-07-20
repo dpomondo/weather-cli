@@ -140,10 +140,10 @@ def response_age():
                          ['observation_epoch'])
         return int(time.time()) - int(res)
     else:
-        # without gloabl variables this line fails
+        ## without gloabl variables this line fails
         # return time_out + 1
         #
-        # this is a bad bad hacky thing
+        ## this is a bad bad hacky thing
         return 601
 
 
@@ -200,7 +200,7 @@ def update(weather_db, verbose=False, check_time=True):
         for key in now:
             nerd[key] = now[key]
         with open(day_file_name() + ".json", "w") as outfile:
-            json.dump(nerd, outfile, indent=4)
+            json.dump(nerd, outfile, indent=2)
         del(nerd)
         if verbose:
             keys = list(weather_db.keys())

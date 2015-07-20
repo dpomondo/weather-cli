@@ -40,17 +40,12 @@ def temp_current_get(temp):
 def main():
     if not os.path.isfile(today_current):
         call_getter()
-
     current = open_current_file()
     ob_ep = get_current_time(current)
-
     if ob_ep + time_out < time.time():
         call_getter()
-
     temp = temp_current_get(current)
-
     out = "Current Temp: {}".format(temp)
-
     sys.stdout.write(out)
 
 
