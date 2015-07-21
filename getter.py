@@ -137,6 +137,8 @@ def get_response(verbose=False, check_time=True, time_out=600, **kwargs):
                     time_out - response_age()))
             return
     params = kwargs.get('params', None)
+    if verbose:
+        print("Requesting from {}".format(updater.make_url(**kwargs)))
     r = requests.get(updater.make_url(**kwargs), params=params)
     if sys.version_info[1] < 4:
         current_response = r.json
