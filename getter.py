@@ -25,6 +25,7 @@
 # -----------------------------------------------------------------------------
 
 import sys
+# import os
 import requests
 import time
 import json
@@ -104,35 +105,6 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def make_url(**temp):
-    url = temp['url']
-    req_keys = temp['req_keys']
-    api = temp['api']
-    if not url.startswith('http://'):
-        res = "{}{}".format("http://", url)
-    else:
-        res = url
-    if req_keys.get('query', None):
-        if req_keys.get('settings', None):
-            res = "{}/api/{}/{}/{}/q/{}.{}".format(
-                res,
-                api,
-                req_keys['features'],
-                req_keys['settings'],
-                req_keys['query'],
-                req_keys['format']
-                )
-        else:
-            res = "{}/api/{}/{}/q/{}.{}".format(
-                res,
-                api,
-                req_keys['features'],
-                req_keys['query'],
-                req_keys['format']
-                )
-    return res
-
-
 def response_age():
     if 'current_response' in weather_db:
         res = (weather_db['current_response']
@@ -152,6 +124,9 @@ def get_response(verbose=False, check_time=True, time_out=600, **kwargs):
     from the website
     """
     import pprint
+    if '/usr/self/weather' not in sys.path:
+        sys.path.append('/usr/self/weather')
+    import updater
     if verbose:
         print("Getting response from the server...")
     if time_out and check_time:
@@ -162,7 +137,7 @@ def get_response(verbose=False, check_time=True, time_out=600, **kwargs):
                     time_out - response_age()))
             return
     params = kwargs.get('params', None)
-    r = requests.get(make_url(**kwargs), params=params)
+    r = requests.get(updater.make_url(**kwargs), params=params)
     if sys.version_info[1] < 4:
         current_response = r.json
     else:
@@ -344,6 +319,14 @@ def print_forecast():
 
 
 def print_bookkeeping():
+    # TODO: everything here should be returned via a call to updater:
+    #           1. keys
+    #           2. observation_epoch
+    #           3. response age
+    #       Add the following to updater:
+    #           1. number_of_keys()
+    #           2. latest_call()
+    #           3. response_age()
     if args.keys:
         keys = list(weather_db.keys())
         print("number of keys: {}".format(len(keys)))
