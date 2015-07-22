@@ -45,9 +45,9 @@ def main():
     if ob_ep + time_out < time.time():
         call_getter()
     temp = temp_current_get(current)
-    out = "Current Temp: {}".format(temp)
-    sys.stdout.write(out)
+    return "Current Temp: {}".format(temp)
 
 
 if __name__ == "__main__":
-    main()
+    out = main()
+    sys.stdout.write(out)

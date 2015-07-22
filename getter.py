@@ -26,7 +26,6 @@
 
 import sys
 # import os
-import requests
 import time
 import json
 import argparse
@@ -119,51 +118,26 @@ def response_age():
         return 601
 
 
-def get_response(verbose=False, check_time=True, time_out=600, **kwargs):
-    """ Fill the current_response object with the json returned
-    from the website
-    """
-    import pprint
-    if '/usr/self/weather' not in sys.path:
-        sys.path.append('/usr/self/weather')
-    import updater
-    if verbose:
-        print("Getting response from the server...")
-    if time_out and check_time:
-        if response_age() < time_out:
-            if args.verbose:
-                print("re-query too soon.")
-                print("re-query possible in {} seconds".format(
-                    time_out - response_age()))
-            return
-    params = kwargs.get('params', None)
-    if verbose:
-        print("Requesting from {}".format(updater.make_url(**kwargs)))
-    r = requests.get(updater.make_url(**kwargs), params=params)
-    if sys.version_info[1] < 4:
-        current_response = r.json
-    else:
-        current_response = r.json()
-    if verbose:
-        print('Response keys:')
-        pprint.pprint(current_response.keys())
-    return current_response
-
-
 def update(weather_db, verbose=False, check_time=True):
     # do the thing
     # this is a very crummy emergency solution:
     home_dir = '/usr/self/weather/'
     config = home_dir + 'jwunderground.json'
     temp = load_vars(config=config)
-    url = temp['url']
-    req_keys = temp['req_keys']
-    api = temp['api']
     time_out = int(temp.get('time_out', 600))
 
     import pprint
-    now = get_response(verbose=verbose, check_time=check_time,
-            time_out=time_out, **temp)
+    if check_time:
+        if response_age() < time_out:
+            if args.verbose:
+                print("re-query too soon.")
+                print("re-query possible in {} seconds".format(
+                    time_out - response_age()))
+            return
+    if '/usr/self/weather' not in sys.path:
+        sys.path.append('/usr/self/weather')
+    import updater
+    now = updater.get_response(verbose=verbose, **temp)
     # umm... the whole thing breaks if the server sends back the wrong thing?
     if now is not None and 'current_observation' in now:
         if verbose:
@@ -208,70 +182,6 @@ def key_printer(dic):
             results.append("{}{}:{:<{width}}{}{}{}".format(key_color, key, " ",
                 val_color, dic[key], end_color, width=new_len-len(key)))
     return results
-
-
-def print_current():
-    return_current = []
-    temp_colors = ";".join([str(1), str(34), str(47)])
-    color_code = "\033[{}m".format(temp_colors)
-    color_clear = "\033[0m"
-    current_dic = {"1Temp":  {'arg': 'temperature',
-                              'nam': "Temp",
-                              'key': 'temp_f',
-                              'col': "\033[1;34;47m"},
-                   "2Wind":  {'arg': 'wind',
-                              'nam': "Wind",
-                              'key': 'wind_string',
-                              'col': "\033[38;5;199m\033[48;5;157m"},
-                   "3Relative Humidity":
-                             {'arg': 'humidity',
-                              'nam': "Humidity",
-                              'key': 'relative_humidity',
-                              'col': "\033[2;34m"},
-                   "4Sky":   {'arg': 'conditions',
-                              'nam': "Conditions",
-                              'key': 'weather',
-                              'col': '\033[3;36;47m'}
-                   }
-    # make sure SOMETHING gets printed:
-    if not (args.wind or
-            args.humidity or
-            args.conditions or
-            args.temperature or
-            args.all):
-        args.temperature = True
-    if args.all:
-        args.temperature = True
-        args.wind = True
-        args.humidity = True
-        args.conditions = True
-    _lis = []
-    for k in current_dic:
-        if getattr(args, current_dic[k]['arg']) is True:
-            _lis.append(k)
-    _lis.sort()
-    # debug line!
-    if args.debug:
-        print("list of keys to print: " + str(_lis))
-    width = max(list(len(item) for item in list(current_dic[k]['nam'] for k in
-        _lis)))
-    # print("width:\t" + str(width), type(width))
-
-    # and below here is what's getting changed up:
-    for key in _lis:
-        color_code = current_dic[key]['col']
-        return_current.append("{}:{}{:<{width}}{}{}".format(
-                                            current_dic[key]['nam'], 
-                                            color_code, 
-                                            " ",
-                                            weather_db['current_response']
-                                                      ['current_observation']
-                                                      [current_dic[key]['key']],
-                                            color_clear,
-                                            width=width - len(
-                                                current_dic[key]['nam']) + 1))
-    for lin in return_current:
-        print(lin)
 
 
 def print_moon():
@@ -366,9 +276,7 @@ if __name__ == '__main__':
     # -------------------------------------------------------------------------
     # init variables
     # -------------------------------------------------------------------------
-    # shelve_file = '/usr/self/weather/june_weather'
     home_dir = '/usr/self/weather/'
-    # shelve_file = home_dir + time.strftime("%d%b%y") + "_weather"
     config = home_dir + 'jwunderground.json'
     weather_db = shelve.open(day_file_name())
 
@@ -401,7 +309,11 @@ if __name__ == '__main__':
                 print_bookkeeping()
                 loop_flag = False
             elif args.now or not (args.hourly or args.forecast):
-                print_current()
+                if '/usr/self/weather' not in sys.path:
+                    sys.path.append('/usr/self/weather')
+                import current
+                current.print_current(weather_db['current_response']
+                                      ['current_observation'], args)
                 loop_flag = False
             elif args.hourly:
                 print_hourly()
