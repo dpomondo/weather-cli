@@ -63,6 +63,10 @@ def parse_arguments():
                         action='store_true',
                         help='return current humidity'
                         )
+    parser.add_argument('--times', '-i',
+                        action='store_true',
+                        help='list all times of todays server queries'
+                        )
     parser.add_argument('--conditions', '-c',
                         action='store_true',
                         help='return current conditions'
@@ -100,7 +104,6 @@ def parse_arguments():
                         action='store_true',
                         help='print out current server response'
                         )
-
     return parser.parse_args()
 
 
@@ -134,8 +137,8 @@ def update(weather_db, verbose=False, check_time=True):
                 print("re-query possible in {} seconds".format(
                     time_out - response_age()))
             return
-    if '/usr/self/weather' not in sys.path:
-        sys.path.append('/usr/self/weather')
+    if home_dir not in sys.path:
+        sys.path.append(home_dir)
     import updater
     now = updater.get_response(verbose=verbose, **temp)
     # umm... the whole thing breaks if the server sends back the wrong thing?
@@ -203,19 +206,6 @@ def print_moon():
         print(lin)
 
 
-def print_hourly():
-    for hour in weather_db['current_response']['hourly_forecast'][0:13]:
-        compound = "{:>9}, {:>2}:{:<2} {}".format(
-            hour['FCTTIME']['weekday_name'],
-            hour['FCTTIME']['hour'],
-            hour['FCTTIME']['min'],
-            hour['FCTTIME']['ampm'])
-        print("{:>19}  temp:{:>4}\tconditions: {}".format(
-            compound,
-            hour['temp']['english'],
-            hour['condition']))
-
-
 def print_forecast():
     for day in (weather_db['current_response']
                           ['forecast']
@@ -239,9 +229,14 @@ def print_bookkeeping():
     #           1. number_of_keys()
     #           2. latest_call()
     #           3. response_age()
-    if args.keys:
+    if args.keys and not args.times:
         keys = list(weather_db.keys())
         print("number of keys: {}".format(len(keys)))
+    if args.times:
+        keys = list(weather_db.keys())
+        keys.sort()
+        for k in keys[:-1]:     # cut off 'current_response' key
+            print('{}: {}'.format(k, time.ctime(int(k))))
     if args.recent:
         print("Latest call: {}".format(
             time.ctime(float(weather_db['current_response']
@@ -305,18 +300,22 @@ if __name__ == '__main__':
             elif args.moon:
                 print_moon()
                 loop_flag = False
-            elif (args.keys or args.recent or args.query):
+            elif (args.keys or args.recent or args.query or args.times):
                 print_bookkeeping()
                 loop_flag = False
             elif args.now or not (args.hourly or args.forecast):
-                if '/usr/self/weather' not in sys.path:
-                    sys.path.append('/usr/self/weather')
+                if home_dir not in sys.path:
+                    sys.path.append(home_dir)
                 import current
                 current.print_current(weather_db['current_response']
                                       ['current_observation'], args)
                 loop_flag = False
             elif args.hourly:
-                print_hourly()
+                if home_dir not in sys.path:
+                    sys.path.append(home_dir)
+                import print_hourly
+                print_hourly.print_hourly(weather_db['current_response']
+                                          ['hourly_forecast'][0:13])
                 loop_flag = False
             elif args.forecast:
                 print_forecast()

@@ -44,8 +44,8 @@ def main():
     ob_ep = get_current_time(current)
     if ob_ep + time_out < time.time():
         call_getter()
-    temp = temp_current_get(current)
-    return "Current Temp: {}".format(temp)
+    temperature = temp_current_get(current)
+    return "Current Temp: {}".format(temperature)
 
 
 if __name__ == "__main__":
