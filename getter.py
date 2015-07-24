@@ -125,7 +125,7 @@ def update(weather_db, verbose=False, check_time=True):
     # do the thing
     # this is a very crummy emergency solution:
     home_dir = '/usr/self/weather/'
-    config = home_dir + 'jwunderground.json'
+    config = home_dir + 'config/' + 'jwunderground.json'
     temp = load_vars(config=config)
     time_out = int(temp.get('time_out', 600))
 
@@ -229,14 +229,14 @@ def print_bookkeeping():
     #           1. number_of_keys()
     #           2. latest_call()
     #           3. response_age()
-    if args.keys and not args.times:
-        keys = list(weather_db.keys())
-        print("number of keys: {}".format(len(keys)))
     if args.times:
         keys = list(weather_db.keys())
         keys.sort()
         for k in keys[:-1]:     # cut off 'current_response' key
             print('{}: {}'.format(k, time.ctime(int(k))))
+    if args.keys:
+        keys = list(weather_db.keys())
+        print("number of keys: {}".format(len(keys)))
     if args.recent:
         print("Latest call: {}".format(
             time.ctime(float(weather_db['current_response']
@@ -256,7 +256,7 @@ def load_vars(config):
 
 def day_file_name():
     home_dir = '/usr/self/weather/'
-    temp = home_dir + time.strftime("%d%b%y") + "_weather"
+    temp = home_dir + 'weather_data/' + time.strftime("%d%b%y") + "_weather"
     return temp
 
 
@@ -272,8 +272,10 @@ if __name__ == '__main__':
     # init variables
     # -------------------------------------------------------------------------
     home_dir = '/usr/self/weather/'
-    config = home_dir + 'jwunderground.json'
+    config = home_dir + 'config/' + 'jwunderground.json'
     weather_db = shelve.open(day_file_name())
+    if home_dir not in sys.path:
+        sys.path.append(home_dir)
 
     loop_flag = True
 
@@ -304,17 +306,13 @@ if __name__ == '__main__':
                 print_bookkeeping()
                 loop_flag = False
             elif args.now or not (args.hourly or args.forecast):
-                if home_dir not in sys.path:
-                    sys.path.append(home_dir)
-                import current
-                current.print_current(weather_db['current_response']
+                import printers.current
+                printers.current.print_current(weather_db['current_response']
                                       ['current_observation'], args)
                 loop_flag = False
             elif args.hourly:
-                if home_dir not in sys.path:
-                    sys.path.append(home_dir)
-                import print_hourly
-                print_hourly.print_hourly(weather_db['current_response']
+                import printers.print_hourly
+                printers.print_hourly.print_hourly(weather_db['current_response']
                                           ['hourly_forecast'][0:13])
                 loop_flag = False
             elif args.forecast:

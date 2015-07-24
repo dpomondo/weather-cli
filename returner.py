@@ -8,7 +8,7 @@ import time
 
 time_out = 600
 home_dir = '/usr/self/weather/'
-shelve_file = home_dir + time.strftime("%d%b%y") + "_weather"
+shelve_file = home_dir + 'weather_data/' + time.strftime("%d%b%y") + "_weather"
 today_current = shelve_file + ".json"
 
 
