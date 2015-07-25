@@ -25,11 +25,10 @@
 # -----------------------------------------------------------------------------
 
 import sys
-# import os
+import os
 import time
 import json
 import argparse
-# kill the following:
 import shelve
 
 
@@ -114,18 +113,18 @@ def response_age():
                          ['observation_epoch'])
         return int(time.time()) - int(res)
     else:
-        ## without gloabl variables this line fails
+        # without gloabl variables this line fails
         # return time_out + 1
         #
-        ## this is a bad bad hacky thing
+        # this is a bad bad hacky thing
         return 601
 
 
 def update(weather_db, verbose=False, check_time=True):
     # do the thing
     # this is a very crummy emergency solution:
-    home_dir = '/usr/self/weather/'
-    config = home_dir + 'config/' + 'jwunderground.json'
+    home_dir = '/usr/self/weather'
+    config = os.path.join(home_dir,  'config',  'jwunderground.json')
     temp = load_vars(config=config)
     time_out = int(temp.get('time_out', 600))
 
@@ -175,49 +174,26 @@ def key_printer(dic):
         if isinstance(dic[key], dict):
             # remember kids: recursion is cool
             temp = key_printer(dic[key])
-            results.append("{}{}:{:<{width}}{}".format(key_color, key, " ",
-                    end_color, width=(new_len-len(key))))
+            results.append("{}{}:{:<{width}}{}".format(key_color,
+                                                       key,
+                                                       " ",
+                                                       end_color,
+                                                       width=(new_len-len(key))
+                                                       ))
             if len(temp) > 0:
                 results[-1] += temp[0]
                 for t in temp[1:]:
                     results.append((" " + " " * new_len) + t)
         else:
-            results.append("{}{}:{:<{width}}{}{}{}".format(key_color, key, " ",
-                val_color, dic[key], end_color, width=new_len-len(key)))
+            results.append("{}{}:{:<{width}}{}{}{}".format(key_color,
+                                                           key,
+                                                           " ",
+                                                           val_color,
+                                                           dic[key],
+                                                           end_color,
+                                                           width=new_len-len(
+                                                               key)))
     return results
-
-
-def print_moon():
-    temp = []
-    words = ["Moon Phase", "Sunrise", "Sunset"]
-    words_max = max(list(len(z) for z in words))
-    temp.append("{:>{width}}: {}".format(words[0],
-        weather_db['current_response']['moon_phase']['phaseofMoon'],
-        width=words_max))
-    temp.append("{:>{width}}: {}:{}".format(words[1],
-        weather_db['current_response']['moon_phase']['sunrise']['hour'],
-        weather_db['current_response']['moon_phase']['sunrise']['minute'],
-        width=words_max))
-    temp.append("{:>{width}}: {}:{}".format(words[2],
-        weather_db['current_response']['moon_phase']['sunset']['hour'],
-        weather_db['current_response']['moon_phase']['sunset']['minute'],
-        width=words_max))
-    for lin in temp:
-        print(lin)
-
-
-def print_forecast():
-    for day in (weather_db['current_response']
-                          ['forecast']
-                          ['simpleforecast']
-                          ['forecastday']):
-        print("{}, {} {}:\thigh of {}, low of {}, {}".format(
-            day['date']['weekday'],
-            day['date']['monthname'],
-            day['date']['day'],
-            day['high']['fahrenheit'],
-            day['low']['fahrenheit'],
-            day['conditions']))
 
 
 def print_bookkeeping():
@@ -255,8 +231,10 @@ def load_vars(config):
 
 
 def day_file_name():
-    home_dir = '/usr/self/weather/'
-    temp = home_dir + 'weather_data/' + time.strftime("%d%b%y") + "_weather"
+    home_dir = '/usr/self/weather'
+    temp = os.path.join(home_dir,
+                        'weather_data',
+                        (time.strftime("%d%b%y") + "_weather"))
     return temp
 
 
@@ -271,9 +249,14 @@ if __name__ == '__main__':
     # -------------------------------------------------------------------------
     # init variables
     # -------------------------------------------------------------------------
-    home_dir = '/usr/self/weather/'
-    config = home_dir + 'config/' + 'jwunderground.json'
+    home_dir = '/usr/self/weather'
+    config = os.path.join(home_dir, 'config', 'jwunderground.json')
+    #
+    # wrap the following in a try...except. This line is the one that fails if
+    # returner is trying to write the file
+    #
     weather_db = shelve.open(day_file_name())
+    # here we make sure the package imports can go through:
     if home_dir not in sys.path:
         sys.path.append(home_dir)
 
@@ -300,23 +283,33 @@ if __name__ == '__main__':
                     print(r)
                 loop_flag = False
             elif args.moon:
-                print_moon()
+                import printers.moon
+                printers.moon.print_moon(weather_db['current_response']
+                                                   ['moon_phase'])
                 loop_flag = False
             elif (args.keys or args.recent or args.query or args.times):
                 print_bookkeeping()
                 loop_flag = False
             elif args.now or not (args.hourly or args.forecast):
                 import printers.current
-                printers.current.print_current(weather_db['current_response']
-                                      ['current_observation'], args)
+                printers.current.print_current(
+                    weather_db['current_response']
+                              ['current_observation'],
+                    args)
                 loop_flag = False
             elif args.hourly:
                 import printers.print_hourly
-                printers.print_hourly.print_hourly(weather_db['current_response']
-                                          ['hourly_forecast'][0:13])
+                printers.print_hourly.print_hourly(
+                    weather_db['current_response']
+                              ['hourly_forecast']
+                              [0:13])
                 loop_flag = False
             elif args.forecast:
-                print_forecast()
+                import printers.forecast
+                printers.forecast.print_forecast(weather_db['current_response']
+                                                           ['forecast']
+                                                           ['simpleforecast']
+                                                           ['forecastday'])
                 loop_flag = False
             else:
                 update(weather_db, verbose=args.verbose)
