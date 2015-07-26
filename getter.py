@@ -123,10 +123,12 @@ def response_age():
 def update(weather_db, verbose=False, check_time=True):
     # do the thing
     # this is a very crummy emergency solution:
-    import gifnoc.loaders
     home_dir = '/usr/self/weather'
+    if home_dir not in sys.path:
+        sys.path.append(home_dir)
+    import config.loaders
     config_file = os.path.join(home_dir,  'config',  'jwunderground.json')
-    temp = gifnoc.loaders.load_vars(config_file=config_file)
+    temp = config.loaders.load_vars(config_file=config_file)
     time_out = int(temp.get('time_out', 600))
 
     import pprint
@@ -137,8 +139,6 @@ def update(weather_db, verbose=False, check_time=True):
                 print("re-query possible in {} seconds".format(
                     time_out - response_age()))
             return
-    if home_dir not in sys.path:
-        sys.path.append(home_dir)
     import updater
     now = updater.get_response(verbose=verbose, **temp)
     # umm... the whole thing breaks if the server sends back the wrong thing?
@@ -153,8 +153,8 @@ def update(weather_db, verbose=False, check_time=True):
         nerd = {}
         for key in now:
             nerd[key] = now[key]
-        import gifnoc.loaders
-        with open(gifnoc.loaders.day_file_name() + ".json", "w") as outfile:
+        import config.loaders
+        with open(config.loaders.day_file_name() + ".json", "w") as outfile:
             json.dump(nerd, outfile, indent=2)
         del(nerd)
         if verbose:
@@ -243,16 +243,15 @@ if __name__ == '__main__':
     # wrap the following in a try...except. This line is the one that fails if
     # returner is trying to write the file
     #
-    import gifnoc.loaders
-    weather_db = shelve.open(gifnoc.loaders.day_file_name())
     # here we make sure the package imports can go through:
     if home_dir not in sys.path:
         sys.path.append(home_dir)
-
-    loop_flag = True
+    import config.loaders
+    # wrap this in a try...except:
+    weather_db = shelve.open(config.loaders.day_file_name())
 
     args = parse_arguments()
-
+    loop_flag = True
     while loop_flag is True:
         try:
             if args.update:
@@ -260,8 +259,8 @@ if __name__ == '__main__':
                 update(weather_db, verbose=args.verbose, check_time=True)
                 loop_flag = False
             elif args.options:
-                import gifnoc.loaders
-                temp = gifnoc.loaders.load_vars(config_file)
+                import config.loaders
+                temp = config.loaders.load_vars(config_file)
                 res = key_printer(temp)
                 for r in res:
                     print(r)
