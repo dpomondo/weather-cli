@@ -123,9 +123,10 @@ def response_age():
 def update(weather_db, verbose=False, check_time=True):
     # do the thing
     # this is a very crummy emergency solution:
+    import gifnoc.loaders
     home_dir = '/usr/self/weather'
-    config = os.path.join(home_dir,  'config',  'jwunderground.json')
-    temp = load_vars(config=config)
+    config_file = os.path.join(home_dir,  'config',  'jwunderground.json')
+    temp = gifnoc.loaders.load_vars(config_file=config_file)
     time_out = int(temp.get('time_out', 600))
 
     import pprint
@@ -152,7 +153,8 @@ def update(weather_db, verbose=False, check_time=True):
         nerd = {}
         for key in now:
             nerd[key] = now[key]
-        with open(day_file_name() + ".json", "w") as outfile:
+        import gifnoc.loaders
+        with open(gifnoc.loaders.day_file_name() + ".json", "w") as outfile:
             json.dump(nerd, outfile, indent=2)
         del(nerd)
         if verbose:
@@ -224,20 +226,6 @@ def print_bookkeeping():
             600 - response_age()))
 
 
-def load_vars(config):
-    with open(config, 'r') as infile:
-        temp = json.load(infile)
-    return temp
-
-
-def day_file_name():
-    home_dir = '/usr/self/weather'
-    temp = os.path.join(home_dir,
-                        'weather_data',
-                        (time.strftime("%d%b%y") + "_weather"))
-    return temp
-
-
 if __name__ == '__main__':
     """ Hooray, a giant if-elif-else tree!
     """
@@ -250,12 +238,13 @@ if __name__ == '__main__':
     # init variables
     # -------------------------------------------------------------------------
     home_dir = '/usr/self/weather'
-    config = os.path.join(home_dir, 'config', 'jwunderground.json')
+    config_file = os.path.join(home_dir, 'config', 'jwunderground.json')
     #
     # wrap the following in a try...except. This line is the one that fails if
     # returner is trying to write the file
     #
-    weather_db = shelve.open(day_file_name())
+    import gifnoc.loaders
+    weather_db = shelve.open(gifnoc.loaders.day_file_name())
     # here we make sure the package imports can go through:
     if home_dir not in sys.path:
         sys.path.append(home_dir)
@@ -271,7 +260,8 @@ if __name__ == '__main__':
                 update(weather_db, verbose=args.verbose, check_time=True)
                 loop_flag = False
             elif args.options:
-                temp = load_vars(config)
+                import gifnoc.loaders
+                temp = gifnoc.loaders.load_vars(config_file)
                 res = key_printer(temp)
                 for r in res:
                     print(r)
