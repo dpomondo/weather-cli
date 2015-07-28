@@ -16,12 +16,12 @@ today_current = shelve_file + ".json"
 def call_getter():
     if '/usr/self/bin' not in sys.path:
         sys.path.append('/usr/self/bin')
-    import shelve
+    # import shelve
     import getter
     # need to move this `shelve.open` call to the update function...
-    weather_db = shelve.open(shelve_file)
-    getter.update(weather_db, check_time=False)
-    weather_db.close()
+    # weather_db = shelve.open(shelve_file)
+    getter.update(shelve_file, check_time=False)
+    # weather_db.close()
 
 
 def open_current_file():
@@ -45,8 +45,16 @@ def main():
     ob_ep = get_current_time(current)
     if ob_ep + time_out < time.time():
         call_getter()
-    temperature = temp_current_get(current)
-    return "Current Temp: {}".format(temperature)
+    # kill the following:
+    # sys.stdout.write("{} {}".format(sys.argv[0], __name__))
+    # return "{} {} {}".format(sys.argv[0], __name__, __name__)
+    if __name__ == "__main__":
+        # if we get called from the shell function:
+        temperature = temp_current_get(current)
+        return "Current Temp: {}".format(temperature)
+    else:
+        # if we get called from getter.py, return the whole current response:
+        return current
 
 
 if __name__ == "__main__":

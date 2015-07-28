@@ -106,11 +106,9 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def response_age():
-    if 'current_response' in weather_db:
-        res = (weather_db['current_response']
-                         ['current_observation']
-                         ['observation_epoch'])
+def response_age(db_file):
+    if 'current_observation' in db_file:
+        res = db_file['current_observation']['observation_epoch']
         return int(time.time()) - int(res)
     else:
         # without gloabl variables this line fails
@@ -130,10 +128,10 @@ def update(weather_db, verbose=False, check_time=True):
     config_file = os.path.join(home_dir,  'config',  'jwunderground.json')
     temp = config.loaders.load_vars(config_file=config_file)
     time_out = int(temp.get('time_out', 600))
+    weat_db_file = shelve.open(weather_db)
 
-    import pprint
-    if check_time:
-        if response_age() < time_out:
+    if check_time and 'currernt_response' in weat_db_file:
+        if response_age(weat_db_file['current_response']) < time_out:
             if args.verbose:
                 print("re-query too soon.")
                 print("re-query possible in {} seconds".format(
@@ -144,10 +142,12 @@ def update(weather_db, verbose=False, check_time=True):
     # umm... the whole thing breaks if the server sends back the wrong thing?
     if now is not None and 'current_observation' in now:
         if verbose:
+            import pprint
             print('Function returned this:')
             pprint.pprint(now.keys())
-        weather_db['current_response'] = now
-        weather_db[now['current_observation']['observation_epoch']] = now
+        weat_db_file['current_response'] = now
+        weat_db_file[now['current_observation']['observation_epoch']] = now
+        weat_db_file.close()
         # for some reason, trying to dump `now['current_response']` to the json
         # file RECALLS this function, looping & crashing the whole thing
         nerd = {}
@@ -198,7 +198,7 @@ def key_printer(dic):
     return results
 
 
-def print_bookkeeping():
+def print_bookkeeping(current_ob, weat_db):
     # TODO: everything here should be returned via a call to updater:
     #           1. keys
     #           2. observation_epoch
@@ -207,23 +207,22 @@ def print_bookkeeping():
     #           1. number_of_keys()
     #           2. latest_call()
     #           3. response_age()
+    if args.times or args.keys:
+        import updater
+        keys = updater.list_keys(weat_db)
     if args.times:
-        keys = list(weather_db.keys())
-        keys.sort()
         for k in keys[:-1]:     # cut off 'current_response' key
             print('{}: {}'.format(k, time.ctime(int(k))))
     if args.keys:
-        keys = list(weather_db.keys())
         print("number of keys: {}".format(len(keys)))
     if args.recent:
         print("Latest call: {}".format(
-            time.ctime(float(weather_db['current_response']
-                                       ['current_observation']
-                                       ['observation_epoch']))))
+            time.ctime(float(current['current_observation']
+                                    ['observation_epoch']))))
     if args.query:
         print("re-query possible in {} seconds".format(
             # time_out - response_age()))
-            600 - response_age()))
+            600 - response_age(current_ob)))
 
 
 if __name__ == '__main__':
@@ -239,16 +238,13 @@ if __name__ == '__main__':
     # -------------------------------------------------------------------------
     home_dir = '/usr/self/weather'
     config_file = os.path.join(home_dir, 'config', 'jwunderground.json')
-    #
-    # wrap the following in a try...except. This line is the one that fails if
-    # returner is trying to write the file
-    #
     # here we make sure the package imports can go through:
     if home_dir not in sys.path:
         sys.path.append(home_dir)
     import config.loaders
-    # wrap this in a try...except:
-    weather_db = shelve.open(config.loaders.day_file_name())
+    import returner
+    weather_db = config.loaders.day_file_name()
+    current = returner.main()
 
     args = parse_arguments()
     loop_flag = True
@@ -259,46 +255,39 @@ if __name__ == '__main__':
                 update(weather_db, verbose=args.verbose, check_time=True)
                 loop_flag = False
             elif args.options:
-                import config.loaders
+                # import config.loaders
                 temp = config.loaders.load_vars(config_file)
                 res = key_printer(temp)
                 for r in res:
                     print(r)
                 loop_flag = False
             elif args.debug:
-                res = key_printer(weather_db['current_response']
-                                            ['current_observation'])
+                res = key_printer(current['current_observation'])
                 for r in res:
                     print(r)
                 loop_flag = False
             elif args.moon:
                 import printers.moon
-                printers.moon.print_moon(weather_db['current_response']
-                                                   ['moon_phase'])
+                printers.moon.print_moon(current['moon_phase'])
                 loop_flag = False
             elif (args.keys or args.recent or args.query or args.times):
-                print_bookkeeping()
+                print_bookkeeping(current_ob=current, weat_db=weather_db)
                 loop_flag = False
             elif args.now or not (args.hourly or args.forecast):
                 import printers.current
-                printers.current.print_current(
-                    weather_db['current_response']
-                              ['current_observation'],
-                    args)
+                printers.current.print_current(current['current_observation'],
+                                               args)
                 loop_flag = False
             elif args.hourly:
                 import printers.print_hourly
-                printers.print_hourly.print_hourly(
-                    weather_db['current_response']
-                              ['hourly_forecast']
-                              [0:13])
+                printers.print_hourly.print_hourly(current['hourly_forecast']
+                                                          [0:13])
                 loop_flag = False
             elif args.forecast:
                 import printers.forecast
-                printers.forecast.print_forecast(weather_db['current_response']
-                                                           ['forecast']
-                                                           ['simpleforecast']
-                                                           ['forecastday'])
+                printers.forecast.print_forecast(current['forecast']
+                                                        ['simpleforecast']
+                                                        ['forecastday'])
                 loop_flag = False
             else:
                 update(weather_db, verbose=args.verbose)
@@ -309,5 +298,5 @@ if __name__ == '__main__':
         #       3 chopping down the elif tree!
         except KeyError:
             update(weather_db, verbose=args.verbose)
-        finally:
-            weather_db.close()
+        # finally:
+            # weather_db.close()
