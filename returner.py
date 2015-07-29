@@ -6,11 +6,12 @@ import sys
 import os
 import time
 
+# impport config.loaders
+# change allo these to function calls:
 time_out = 600
 home_dir = '/usr/self/weather/'
-shelve_file = os.path.join(home_dir,  'weather_data',
-                           (time.strftime("%d%b%y") + "_weather"))
-today_current = shelve_file + ".json"
+
+import config.loaders
 
 
 def call_getter():
@@ -18,14 +19,12 @@ def call_getter():
         sys.path.append('/usr/self/bin')
     # import shelve
     import getter
-    # need to move this `shelve.open` call to the update function...
-    # weather_db = shelve.open(shelve_file)
-    getter.update(shelve_file, check_time=False)
+    getter.update(config.loaders.day_file_name(), check_time=False)
     # weather_db.close()
 
 
 def open_current_file():
-    with open(today_current, "r") as infile:
+    with open(config.loaders.current_file_name(), "r") as infile:
         temp = json.load(infile)
     return temp
 
@@ -39,7 +38,7 @@ def temp_current_get(temp):
 
 
 def main():
-    if not os.path.isfile(today_current):
+    if not os.path.isfile(config.loaders.current_file_name()):
         call_getter()
     current = open_current_file()
     ob_ep = get_current_time(current)
