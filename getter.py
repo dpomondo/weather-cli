@@ -115,7 +115,7 @@ def response_age(db_file):
         return 601
 
 
-def update(weather_db, verbose=False, check_time=True):
+def update(verbose=False, check_time=True):
     # do the thing
     # this is a very crummy emergency solution:
     home_dir = '/usr/self/weather'
@@ -128,8 +128,8 @@ def update(weather_db, verbose=False, check_time=True):
     config_file = config.loaders.config_file_name()
     temp = config.loaders.load_vars(config_file=config_file)
     time_out = int(temp.get('time_out', 600))
-    print("weather_db: {}".format(weather_db))
-    weat_db_file = shelve.open(weather_db)
+    db_target = config.loaders.day_file_name()
+    weat_db_file = shelve.open(db_target)
 
     try:
         if check_time and 'currernt_response' in weat_db_file:
@@ -153,13 +153,13 @@ def update(weather_db, verbose=False, check_time=True):
             nerd = {}
             for key in now:
                 nerd[key] = now[key]
-            with open(config.loaders.day_file_name(), "w") as outfile:
+            with open(config.loaders.current_file_name(), "w") as outfile:
                 json.dump(nerd, outfile, indent=2)
             del(nerd)
             if verbose:
-                keys = list(weather_db.keys())
+                keys = list(weat_db_file.keys())
                 print("weather_db has the following keys:")
-            pprint.pprint(keys)
+                pprint.pprint(keys)
     finally:
         weat_db_file.close()
 
@@ -216,7 +216,7 @@ def main():
         try:
             if args.update:
                 args.verbose = True
-                update(weather_db_name, verbose=args.verbose, check_time=True)
+                update(verbose=args.verbose, check_time=True)
                 loop_flag = False
             elif args.options:
                 temp = config.loaders.load_vars(config_file)
@@ -260,10 +260,10 @@ def main():
                     loop_flag = False
             # if we've fallen through to here, do SOMETHING useful:
             if loop_flag is False:
-                update(weather_db_name, verbose=args.verbose)
+                update(verbose=args.verbose)
                 loop_flag = False
         except KeyError:
-            update(weather_db_name, verbose=args.verbose)
+            update(verbose=args.verbose)
 
 
 if __name__ == '__main__':

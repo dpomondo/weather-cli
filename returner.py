@@ -6,12 +6,12 @@ import sys
 import os
 import time
 
-# impport config.loaders
+home_dir = '/usr/self/weather/'
+if home_dir not in sys.path:
+    sys.path.append(home_dir)
+import config.loaders
 # change allo these to function calls:
 time_out = 600
-home_dir = '/usr/self/weather/'
-
-import config.loaders
 
 
 def call_getter():
@@ -19,7 +19,7 @@ def call_getter():
         sys.path.append('/usr/self/bin')
     # import shelve
     import getter
-    getter.update(config.loaders.day_file_name(), check_time=False)
+    getter.update(check_time=False)
     # weather_db.close()
 
 
