@@ -176,6 +176,8 @@ def print_bookkeeping(args, current_ob, weat_db):
     if args.times or args.keys:
         import updater
         keys = updater.list_keys(weat_db)
+        # from .updater import list_keys
+        # keys = list_keys(weat_db)
     if args.times:
         for k in keys[:-1]:     # cut off 'current_response' key
             print('{}: {}'.format(k, time.ctime(int(k))))
