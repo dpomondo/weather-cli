@@ -44,18 +44,25 @@ def get_response(verbose=False, **kwargs):
     """ Fill the current_response object with the json returned
     from the website
     """
-    import pprint
     if verbose:
         print("Getting response from the server...")
     params = kwargs.get('params', None)
     if verbose:
         print("Requesting from {}".format(make_url(**kwargs)))
-    r = requests.get(make_url(**kwargs), params=params)
+    # Here is where the script fails if there is no connection
+    # wrap the following in a try... except:
+    try:
+        r = requests.get(make_url(**kwargs), params=params)
+    except requests.exceptions.ConnectionError as e:
+        # print("bad thing caught in updater.get_response(): {}".format(e))
+        # sys.exit()
+        raise e
     if sys.version_info[1] < 4:
         current_response = r.json
     else:
         current_response = r.json()
     if verbose:
+        import pprint
         print('Response keys:')
         pprint.pprint(current_response.keys())
     return current_response

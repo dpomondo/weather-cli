@@ -132,14 +132,21 @@ def update(verbose=False, check_time=True):
     weat_db_file = shelve.open(db_target)
 
     try:
-        if check_time and 'currernt_response' in weat_db_file:
+        if check_time and ('current_response' in weat_db_file):
             if response_age(weat_db_file['current_response']) < time_out:
                 if verbose:
                     print("re-query too soon.")
                     print("re-query possible in {} seconds".format(
-                        time_out - response_age()))
-                return
-        now = updater.get_response(verbose=verbose, **temp)
+                        time_out
+                        - response_age(weat_db_file['current_response'])))
+            return
+        try:
+            now = updater.get_response(verbose=verbose, **temp)
+        # except requests.exceptions.ConnectionError as e:
+        except Exception as e:
+            # print("{} caught in getter.update".format(e))
+            # sys.exit()
+            raise e
         if now is not None and 'current_observation' in now:
             import pprint
             if verbose:
@@ -261,11 +268,14 @@ def main():
                                                             ['forecastday'])
                     loop_flag = False
             # if we've fallen through to here, do SOMETHING useful:
-            if loop_flag is False:
+            if loop_flag is not False:
                 update(verbose=args.verbose)
                 loop_flag = False
         except KeyError:
             update(verbose=args.verbose)
+        except Exception as e:
+            print("exception cuaght at top level: {}".format(e))
+            loop_flag = False
 
 
 if __name__ == '__main__':
