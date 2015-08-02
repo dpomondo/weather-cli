@@ -129,6 +129,8 @@ def update(verbose=False, check_time=True):
     temp = config.loaders.load_vars(config_file=config_file)
     time_out = int(temp.get('time_out', 600))
     db_target = config.loaders.day_file_name()
+    # trying this out, if it fails the try..finally.. logic below should
+    # be uncommented, and lines 136-170 indented
     weat_db_file = shelve.open(db_target)
 
     try:
@@ -167,6 +169,8 @@ def update(verbose=False, check_time=True):
                 keys = list(weat_db_file.keys())
                 print("weather_db has the following keys:")
                 pprint.pprint(keys)
+    except Exception as e:
+        raise e
     finally:
         weat_db_file.close()
 
@@ -263,18 +267,24 @@ def main():
                     loop_flag = False
                 elif args.forecast:
                     import printers.forecast
-                    printers.forecast.print_forecast(current['forecast']
-                                                            ['simpleforecast']
-                                                            ['forecastday'])
+                    res = printers.forecast.print_forecast(
+                        current['forecast']
+                               ['simpleforecast']
+                               ['forecastday'],
+                        frmt='grid')
+                    for lin in res:
+                        print(lin)
                     loop_flag = False
             # if we've fallen through to here, do SOMETHING useful:
             if loop_flag is not False:
                 update(verbose=args.verbose)
                 loop_flag = False
-        except KeyError:
-            update(verbose=args.verbose)
+        except KeyError as e:
+            # update(verbose=args.verbose)
+            print("KeyError caught: {}".format(e))
+            loop_flag = False
         except Exception as e:
-            print("exception cuaght at top level: {}".format(e))
+            print("exception caught at top level: {}".format(e))
             loop_flag = False
 
 
