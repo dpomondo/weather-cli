@@ -17,8 +17,18 @@ import printers.utilities
 
 # here we have the `magic` numbers, these will eventually be set in a
 # config file
-max_cols = 5
-box_width = 22
+# max_cols = 5
+# min_box_width = 20
+# box_width = 22
+
+
+def get_box_size(weat_db, width, height):
+    # for i in range(2, len(weat_db)):
+        # # pass
+        # if math.ceil(weat_db/i) * min_box_width < width:
+            # max_cols = i
+    # `magic` for now
+    return 5, 22
 
 
 def print_forecast(weat_db, frmt='lines'):
@@ -44,7 +54,7 @@ def lines_forecast(weat_db):
     return res
 
 
-def forecast_day_format(forecast_day, lin_row):
+def forecast_day_format(forecast_day, lin_row, box_width):
     """ appends a formatted forecast day to a list of strings.
         
         forecast_day:   current['current_response']
@@ -82,6 +92,7 @@ def grid_forecast(weat_db):
     num_days = len(weat_db)
     width = printers.utilities.get_terminal_width()
     height = printers.utilities.get_terminal_height()
+    max_cols, box_width = get_box_size(weat_db, width, height)
     cols = min(max_cols, width//box_width)
     rows = math.ceil(num_days/cols)
     while rows * 8 > height:
@@ -94,7 +105,8 @@ def grid_forecast(weat_db):
 
     # now we build the thing
     for day_index in range(len(weat_db)):
-        forecast_day_format(weat_db[day_index], res[day_index // cols])
+        forecast_day_format(weat_db[day_index], res[day_index // cols],
+                            box_width)
 
     # return the result
     # but first flatten:
