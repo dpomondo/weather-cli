@@ -23,16 +23,22 @@ min_box_width = 20
 
 
 def get_box_size(lens, width):
-    for i in range(1, lens):
+    max_cols, box_width = None, None
+    for i in range(lens, 1, -1):
         temp = math.ceil(lens/i)
-        if temp * min_box_width < width:
-            max_cols = i
+        # print("{}: {} --> {}".format(i, temp, temp * min_box_width < width))
+        if temp * min_box_width <= width:
+            max_cols = temp
             box_width = min_box_width + int(
                 (width - (max_cols * min_box_width)) / max_cols)
-            return max_cols, box_width
-        else:
-            # `magic` for now
-            return 5, 22
+        # else:
+            # break
+    if max_cols is not None:
+        return max_cols, box_width
+    # `magic` for now
+    else:
+        raise IndexError("Could not determine max_cols from input")
+        # return 5, 22
 
 
 def print_forecast(weat_db, frmt='lines'):
@@ -126,7 +132,7 @@ if __name__ == '__main__':
     wids = printers.utilities.get_terminal_height()
     hits = printers.utilities.get_terminal_width()
     print("Screen width: {}\nScreen height :{}".format(wids, hits))
-    screens = [120, 80, 60, 40]
+    screens = [140, 120, 80, 60, 40]
     days = [10, 12, 15, 5]
     for size in screens:
         for day in days:
