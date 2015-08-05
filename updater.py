@@ -56,7 +56,8 @@ def get_response(verbose=False, **kwargs):
     except requests.exceptions.ConnectionError as e:
         # print("bad thing caught in updater.get_response(): {}".format(e))
         # sys.exit()
-        raise e
+        tb = sys.exc_info()[2]
+        raise e.with_traceback(tb)
     if sys.version_info[1] < 4:
         current_response = r.json
     else:

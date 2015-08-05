@@ -31,13 +31,16 @@ def get_box_size(lens, width):
             max_cols = temp
             box_width = min_box_width + int(
                 (width - (max_cols * min_box_width)) / max_cols)
-        # else:
-            # break
+        else:
+            break
     if max_cols is not None:
         return max_cols, box_width
     # `magic` for now
     else:
-        raise IndexError("Could not determine max_cols from input")
+        tb = sys.exc_info()[2]
+        # raise e.with_traceback(tb)
+        raise IndexError("{} and {} made get_box_size func fail".format(lens,
+            width)).with_traceback(tb)
         # return 5, 22
 
 
@@ -61,6 +64,40 @@ def lines_forecast(weat_db):
             day['high']['fahrenheit'],
             day['low']['fahrenheit'],
             day['conditions']))
+    return res
+
+
+def new_forecast_day_format(forecast_day, box_width):
+    """ formats one day of a forecast, returned as a list of lines
+    """
+    res = []
+    margin = (box_width - 20) // 2
+    res.append('{}{}'.format('+', '-' * box_width))
+    res.append('{}'.format(' ' * box_width))
+    day = '{}{}, {} {}'.format(' ' * margin, forecast_day['date']['weekday'],
+                               forecast_day['date']['monthname'],
+                               forecast_day['date']['day'])
+    padding = box_width - len(day)
+    res.append('{}{}'.format(day, ' ' * padding))
+    nerd = '{}{:>10}{}'.format(' ' * margin, 'high: ',
+                               forecast_day['high']['fahrenheit'])
+    padding = box_width - len(nerd)
+    res.append('{}{}'.format(nerd, ' ' * padding))
+    nerd = '{}{:>10}{}'.format(' ' * margin, 'low: ',
+                               forecast_day['low']['fahrenheit'])
+    padding = box_width - len(nerd)
+    res.append('{}{}'.format(nerd, ' ' * padding))
+    nerd = '{}{:>10}{}'.format(' ' * margin, 'weather: ',
+                               forecast_day['conditions'][:10])
+    padding = box_width - len(nerd)
+    res.append('{}{}'.format(nerd, ' ' * padding))
+    res.append(' ' * box_width)
+    nerd = '{}{}{}mph {}'.format(' ' * margin, 'wind: ',
+                                 forecast_day['avewind']['mph'],
+                                 forecast_day['avewind']['dir'])
+    padding = box_width - len(nerd)
+    res.append('{}{}'.format(nerd, ' ' * padding))
+    res.append(' ' * box_width)
     return res
 
 
@@ -106,7 +143,7 @@ def grid_forecast(weat_db):
     max_cols, box_width = get_box_size(len(weat_db), width)
     cols = min(max_cols, width//box_width)
     rows = math.ceil(num_days/cols)
-    while rows * 8 > height:
+    while rows * 8 > height:    # truncate if too long:
         rows -= 1
     res = []
     for c in range(rows):
@@ -116,6 +153,8 @@ def grid_forecast(weat_db):
 
     # now we build the thing
     for day_index in range(len(weat_db)):
+        # this is the line that fails with small screen sizes( list index out
+        # of range):
         forecast_day_format(weat_db[day_index], res[day_index // cols],
                             box_width)
 
@@ -129,22 +168,30 @@ def grid_forecast(weat_db):
 
 
 if __name__ == '__main__':
+    print("Begining test:")
     wids = printers.utilities.get_terminal_height()
     hits = printers.utilities.get_terminal_width()
     print("Screen width: {}\nScreen height :{}".format(wids, hits))
-    screens = [140, 120, 80, 60, 40]
+    print("-" * 80)
+    print("Testing get_box_size function (this WILL end in an exception):")
+    screens = [140, 120, 80, 60, 40, 0]
     days = [10, 12, 15, 5]
-    for size in screens:
-        for day in days:
-            mc, bw = get_box_size(day, size)
-            print("{}: {:>5} {}: {:>3} {}: {:>3} {}: {:>4} {}: {}".format(
-                "Window width:",
-                size,
-                "Days in forcast",
-                day,
-                "max_cols",
-                mc,
-                "box_width",
-                bw,
-                "Columns used",
-                mc * bw))
+    try:
+        for size in screens:
+            for day in days:
+                mc, bw = get_box_size(day, size)
+                print("{}: {:>5} {}: {:>3} {}: {:>3} {}: {:>4} {}: {}".format(
+                    "Window width:",
+                    size,
+                    "Days in forcast",
+                    day,
+                    "max_cols",
+                    mc,
+                    "box_width",
+                    bw,
+                    "Columns used",
+                    mc * bw))
+    except IndexError as e:
+        print("Exception correctly caught: \n\t{}".format(e))
+        print("-" * 80)
+        raise e

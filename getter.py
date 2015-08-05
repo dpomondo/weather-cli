@@ -148,7 +148,8 @@ def update(verbose=False, check_time=True):
         except Exception as e:
             # print("{} caught in getter.update".format(e))
             # sys.exit()
-            raise e
+            tb = sys.exec_info()[2]
+            raise e.with_traceback(tb)
         if now is not None and 'current_observation' in now:
             import pprint
             if verbose:
@@ -170,7 +171,8 @@ def update(verbose=False, check_time=True):
                 print("weather_db has the following keys:")
                 pprint.pprint(keys)
     except Exception as e:
-        raise e
+        tb = sys.exec_info()[2]
+        raise e.with_traceback(tb)
     finally:
         weat_db_file.close()
 
@@ -284,7 +286,10 @@ def main():
             print("KeyError caught: {}".format(e))
             loop_flag = False
         except Exception as e:
+            tb = sys.exc_info()[2]
             print("exception caught at top level: {}".format(e))
+            import traceback
+            traceback.print_tb(tb)
             loop_flag = False
 
 
