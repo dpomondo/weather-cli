@@ -72,7 +72,7 @@ def new_forecast_day_format(forecast_day, box_width):
     """
     res = []
     margin = (box_width - 20) // 2
-    res.append('{}{}'.format('+', '-' * box_width))
+    res.append('{}{}'.format('+', '-' * (box_width - 1)))
     res.append('{}'.format(' ' * box_width))
     day = '{}{}, {} {}'.format(' ' * margin, forecast_day['date']['weekday'],
                                forecast_day['date']['monthname'],
@@ -102,14 +102,7 @@ def new_forecast_day_format(forecast_day, box_width):
 
 
 def forecast_day_format(forecast_day, lin_row, box_width):
-    """ appends a formatted forecast day to a list of strings.
-
-        forecast_day:   current['current_response']
-                               ['simpleforecast']
-                               ['forecast_day']
-                               [index]
-        lin_row:        res[row_num]
-
+    """ this function is deprecated and slated for obliteration
         """
     lin_row[0] = '{}{}{}'.format(lin_row[0], '+', '-' * (box_width-1))
     lin_row[1] = '{}{}'.format(lin_row[1], ' ' * box_width)
@@ -152,11 +145,18 @@ def grid_forecast(weat_db):
             res[c].append(' ' * int((width - (cols * box_width)) / 2))
 
     # now we build the thing
-    for day_index in range(len(weat_db)):
+    for day_index in range(min(rows * max_cols, len(weat_db))):
         # this is the line that fails with small screen sizes( list index out
         # of range):
-        forecast_day_format(weat_db[day_index], res[day_index // cols],
-                            box_width)
+        # forecast_day_format(weat_db[day_index], res[day_index // cols],
+                            # box_width)
+        temp = new_forecast_day_format(weat_db[day_index], box_width)
+        try:
+            for i in range(9):
+                res[day_index//cols][i] += temp[i]
+        except IndexError as e:
+            raise IndexError("day_index: {} cols: {} div: {}".format(day_index,
+                cols, day_index//cols)) from e
 
     # return the result
     # but first flatten:
@@ -164,6 +164,7 @@ def grid_forecast(weat_db):
     for c in res:
         for lin in c:
             res2.append(lin)
+    res2.append(res2[0])
     return res2
 
 
@@ -174,7 +175,7 @@ if __name__ == '__main__':
     print("Screen width: {}\nScreen height :{}".format(wids, hits))
     print("-" * 80)
     print("Testing get_box_size function (this WILL end in an exception):")
-    screens = [140, 120, 80, 60, 40, 0]
+    screens = [140, 120, 80, 60, 59, 40, 0]
     days = [10, 12, 15, 5]
     try:
         for size in screens:
