@@ -98,7 +98,12 @@ def new_forecast_day_format(forecast_day, box_width):
     padding = box_width - len(nerd)
     res.append('{}{}'.format(nerd, ' ' * padding))
     res.append(' ' * box_width)
-    return res
+    # make the box:
+    res2 = []
+    res2.append(res[0])
+    for lin in res[1:]:
+        res2.append( '|' + lin[1:])
+    return res2
 
 
 def forecast_day_format(forecast_day, lin_row, box_width):
@@ -136,7 +141,7 @@ def grid_forecast(weat_db):
     max_cols, box_width = get_box_size(len(weat_db), width)
     cols = min(max_cols, width//box_width)
     rows = math.ceil(num_days/cols)
-    while rows * 8 > height:    # truncate if too long:
+    while rows * 9 > height:    # truncate if too long:
         rows -= 1
     res = []
     for c in range(rows):
@@ -165,7 +170,10 @@ def grid_forecast(weat_db):
         for lin in c:
             res2.append(lin)
     res2.append(res2[0])
-    return res2
+    res3 = []
+    for lin in res2:
+        res3.append(lin[:-1] + lin[0])
+    return res3
 
 
 if __name__ == '__main__':
