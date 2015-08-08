@@ -286,10 +286,10 @@ def main():
             print("KeyError caught: {}".format(e))
             loop_flag = False
         except Exception as e:
-            tb = sys.exc_info()[2]
+            # tb = sys.exc_info()[2]
             print("exception caught at top level: {}".format(e))
             import traceback
-            traceback.print_tb(tb)
+            traceback.print_exception(*sys.exc_info())
             loop_flag = False
 
 

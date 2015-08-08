@@ -27,10 +27,11 @@ def get_box_size(lens, width):
     for i in range(lens, 1, -1):
         temp = math.ceil(lens/i)
         # print("{}: {} --> {}".format(i, temp, temp * min_box_width < width))
-        if temp * min_box_width <= width:
+        # if temp * min_box_width <= width:
+        if temp * min_box_width <= width - (temp + 1):
             max_cols = temp
             box_width = min_box_width + int(
-                (width - (max_cols * min_box_width)) / max_cols)
+                ((width - (temp + 1)) - (max_cols * min_box_width)) / max_cols)
         else:
             break
     if max_cols is not None:
@@ -40,7 +41,7 @@ def get_box_size(lens, width):
         tb = sys.exc_info()[2]
         # raise e.with_traceback(tb)
         raise IndexError("{} and {} made get_box_size func fail".format(lens,
-            width)).with_traceback(tb)
+                         width)).with_traceback(tb)
         # return 5, 22
 
 
@@ -72,7 +73,7 @@ def new_forecast_day_format(forecast_day, box_width):
     """
     res = []
     margin = (box_width - 20) // 2
-    res.append('{}{}'.format('+', '-' * (box_width - 1)))
+    # res.append('{}{}'.format('+', '-' * (box_width - 1)))
     res.append('{}'.format(' ' * box_width))
     day = '{}{}, {} {}'.format(' ' * margin, forecast_day['date']['weekday'],
                                forecast_day['date']['monthname'],
@@ -98,12 +99,36 @@ def new_forecast_day_format(forecast_day, box_width):
     padding = box_width - len(nerd)
     res.append('{}{}'.format(nerd, ' ' * padding))
     res.append(' ' * box_width)
-    # make the box:
-    res2 = []
-    res2.append(res[0])
-    for lin in res[1:]:
-        res2.append( '|' + lin[1:])
-    return res2
+    return res
+
+
+def add_box_lines(lins, day_num, total_days, cols_nums):
+    """ Add grid lines to a list of lines, depending on place in grid.
+
+        lins: list of lines formatted using new_forecast_day_format(...)
+        day_num: place in list of days
+        total_days: total number of days getting formatted
+        cols_nums: total number of columns in the grid.
+
+        If day_num < cols_nums... top, right, bottom
+        if day_num +1  % cols_nums ==0 ... left
+        else... right, bottom
+        if day_num = total_days - 1: left
+        """
+    new_lins = []
+    # right:
+    for lin in lins:
+        new_lins.append("{}{}".format('|', lin))
+    # bottom:
+    new_lins.append("{}{}".format('+', '-' * (len(new_lins[-1]) - 1)))
+    # top:
+    if day_num < cols_nums:
+        new_lins.insert(0, new_lins[-1])
+    # left:
+    if (day_num + 1) % cols_nums == 0:
+        for nlin in new_lins:
+            nlin += nlin[0]
+    return new_lins
 
 
 def forecast_day_format(forecast_day, lin_row, box_width):
@@ -146,34 +171,30 @@ def grid_forecast(weat_db):
     res = []
     for c in range(rows):
         res.append([])
-        for i in range(9):
-            res[c].append(' ' * int((width - (cols * box_width)) / 2))
 
     # now we build the thing
+    pre_formatted = []
     for day_index in range(min(rows * max_cols, len(weat_db))):
-        # this is the line that fails with small screen sizes( list index out
-        # of range):
-        # forecast_day_format(weat_db[day_index], res[day_index // cols],
-                            # box_width)
-        temp = new_forecast_day_format(weat_db[day_index], box_width)
-        try:
-            for i in range(9):
-                res[day_index//cols][i] += temp[i]
-        except IndexError as e:
-            raise IndexError("day_index: {} cols: {} div: {}".format(day_index,
-                cols, day_index//cols)) from e
-
+        pre_formatted.append(new_forecast_day_format(weat_db[day_index],
+                             box_width))
+    formatted = []
+    for day_index in range(len(pre_formatted)):
+        formatted.append(add_box_lines(pre_formatted[day_index], day_index,
+                         len(pre_formatted), cols))
+    for day_index in range(len(formatted)):
+        if len(res[day_index//cols]) == 0:
+            res[day_index//cols] = formatted[day_index]
+        else:
+            for ind in range(len(formatted[day_index])):
+                res[day_index//cols][ind] += formatted[day_index][ind]
+        
     # return the result
     # but first flatten:
     res2 = []
     for c in res:
         for lin in c:
             res2.append(lin)
-    res2.append(res2[0])
-    res3 = []
-    for lin in res2:
-        res3.append(lin[:-1] + lin[0])
-    return res3
+    return res2
 
 
 if __name__ == '__main__':
