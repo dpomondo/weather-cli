@@ -110,24 +110,29 @@ def add_box_lines(lins, day_num, total_days, cols_nums):
         total_days: total number of days getting formatted
         cols_nums: total number of columns in the grid.
 
-        If day_num < cols_nums... top, right, bottom
-        if day_num +1  % cols_nums ==0 ... left
-        else... right, bottom
-        if day_num = total_days - 1: left
+        always............................. left, bottom
+        If day_num < cols_nums............. top
+        if day_num +1  % cols_nums ==0 .... right
+        if day_num = total_days - 1........ right
         """
     new_lins = []
-    # right:
+    left_marker = '+'
+    left_horizontal = '|'
+    grid_line = '-' * len(lins[0])
+    if ((day_num + 1) % cols_nums == 0) or (day_num + 1 == total_days):
+        right_horizontal = '|'
+        right_marker = '+'
+    else:
+        right_horizontal, right_marker = '', ''
+    # left, maybe right:
     for lin in lins:
-        new_lins.append("{}{}".format('|', lin))
+        new_lins.append("{}{}{}".format(left_horizontal,
+                                        lin, right_horizontal))
     # bottom:
-    new_lins.append("{}{}".format('+', '-' * (len(new_lins[-1]) - 1)))
+    new_lins.append("{}{}{}".format(left_marker, grid_line, right_marker))
     # top:
     if day_num < cols_nums:
         new_lins.insert(0, new_lins[-1])
-    # left:
-    if (day_num + 1) % cols_nums == 0:
-        for nlin in new_lins:
-            nlin += nlin[0]
     return new_lins
 
 
