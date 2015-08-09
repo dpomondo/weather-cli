@@ -26,8 +26,6 @@ def get_box_size(lens, width):
     max_cols, box_width = None, None
     for i in range(lens, 1, -1):
         temp = math.ceil(lens/i)
-        # print("{}: {} --> {}".format(i, temp, temp * min_box_width < width))
-        # if temp * min_box_width <= width:
         if temp * min_box_width <= width - (temp + 1):
             max_cols = temp
             box_width = min_box_width + int(
@@ -36,13 +34,11 @@ def get_box_size(lens, width):
             break
     if max_cols is not None:
         return max_cols, box_width
-    # `magic` for now
     else:
         tb = sys.exc_info()[2]
         # raise e.with_traceback(tb)
         raise IndexError("{} and {} made get_box_size func fail".format(lens,
                          width)).with_traceback(tb)
-        # return 5, 22
 
 
 def print_forecast(weat_db, frmt='lines'):
@@ -178,27 +174,28 @@ def grid_forecast(weat_db):
         res.append([])
 
     # now we build the thing
-    pre_formatted = []
-    for day_index in range(min(rows * max_cols, len(weat_db))):
-        pre_formatted.append(new_forecast_day_format(weat_db[day_index],
-                             box_width))
-    formatted = []
-    for day_index in range(len(pre_formatted)):
-        formatted.append(add_box_lines(pre_formatted[day_index], day_index,
-                         len(pre_formatted), cols))
-    for day_index in range(len(formatted)):
+    day_nums = min(rows * max_cols, len(weat_db))
+    for day_index in range(day_nums):
+        # if the start of a row the whole list gets popped on there...
         if len(res[day_index//cols]) == 0:
-            res[day_index//cols] = formatted[day_index]
+            res[day_index//cols] = add_box_lines(
+                new_forecast_day_format(weat_db[day_index], box_width),
+                day_index, day_nums, cols)
+        # or we have to add line by line
         else:
-            for ind in range(len(formatted[day_index])):
-                res[day_index//cols][ind] += formatted[day_index][ind]
-        
+            temp = add_box_lines(new_forecast_day_format(weat_db[day_index],
+                                                         box_width),
+                                 day_index, day_nums, cols)
+            for lin in range(len(temp)):
+                res[day_index//cols][lin] += temp[lin]
+
     # return the result
-    # but first flatten:
+    # but first flatten, and add padding:
+    padding = ' ' * ((width - len(res[0][0])) // 2)
     res2 = []
     for c in res:
         for lin in c:
-            res2.append(lin)
+            res2.append(padding + lin)
     return res2
 
 
