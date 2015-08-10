@@ -64,34 +64,70 @@ def lines_forecast(weat_db):
     return res
 
 
-def new_forecast_day_format(forecast_day, box_width):
+def get_colors(color_flag=True):
+    """ Return object with color information.
+    """
+    class Colors:
+        pass
+    colors = Colors()
+    if color_flag is False:
+        color_info = {'temp':  '',
+                      'wind':  '',
+                      'high':  '',
+                      'low':   '',
+                      'cond':  '',
+                      'clear': ''}
+    else:
+        color_info = {'temp':  "\033[1;34;47m",
+                      'wind':  "\033[38;5;199m\033[48;5;157m",
+                      'high':  "\033[1;34;47m",
+                      'low':   "\033[1;34;47m",
+                      'cond':  "\033[3;36;47m",
+                      'clear': "\033[0m"}
+
+    for key in color_info.keys():
+        setattr(colors, key, color_info[key])
+    return colors
+
+
+def new_forecast_day_format(forecast_day, box_width, color_flag=False):
     """ formats one day of a forecast, returned as a list of lines
     """
     res = []
+    COLORS = get_colors(color_flag=color_flag)
     margin = (box_width - 20) // 2
     # res.append('{}{}'.format('+', '-' * (box_width - 1)))
+    # TODO: each line requires a call to a formatting func, passed the COLORS,
+    # the label, and the forecast_day keys. Func totals up the length of the
+    # text to determine padding, THEN does the formatting and returns the line.
+    # This will fix the issue where the COLORS info is counted when determining
+    # the length of the text for end padding
     res.append('{}'.format(' ' * box_width))
     day = '{}{}, {} {}'.format(' ' * margin, forecast_day['date']['weekday'],
                                forecast_day['date']['monthname'],
                                forecast_day['date']['day'])
     padding = box_width - len(day)
     res.append('{}{}'.format(day, ' ' * padding))
-    nerd = '{}{:>10}{}'.format(' ' * margin, 'high: ',
-                               forecast_day['high']['fahrenheit'])
+    nerd = '{}{:>10}{}{}{}'.format(' ' * margin, 'high: ', COLORS.high,
+                                   forecast_day['high']['fahrenheit'],
+                                   COLORS.clear)
     padding = box_width - len(nerd)
     res.append('{}{}'.format(nerd, ' ' * padding))
-    nerd = '{}{:>10}{}'.format(' ' * margin, 'low: ',
-                               forecast_day['low']['fahrenheit'])
+    nerd = '{}{:>10}{}{}{}'.format(' ' * margin, 'low: ', COLORS.low,
+                                   forecast_day['low']['fahrenheit'],
+                                   COLORS.clear)
     padding = box_width - len(nerd)
     res.append('{}{}'.format(nerd, ' ' * padding))
-    nerd = '{}{:>10}{}'.format(' ' * margin, 'weather: ',
-                               forecast_day['conditions'][:10])
+    nerd = '{}{:>10}{}{}{}'.format(' ' * margin, 'weather: ', COLORS.cond,
+                                   forecast_day['conditions'][:10],
+                                   COLORS.clear)
     padding = box_width - len(nerd)
     res.append('{}{}'.format(nerd, ' ' * padding))
     res.append(' ' * box_width)
-    nerd = '{}{}{}mph {}'.format(' ' * margin, 'wind: ',
-                                 forecast_day['avewind']['mph'],
-                                 forecast_day['avewind']['dir'])
+    nerd = '{}{}{}{}mph {}{}'.format(' ' * margin, 'wind: ', COLORS.wind,
+                                     forecast_day['avewind']['mph'],
+                                     forecast_day['avewind']['dir'],
+                                     COLORS.clear)
     padding = box_width - len(nerd)
     res.append('{}{}'.format(nerd, ' ' * padding))
     res.append(' ' * box_width)
