@@ -90,6 +90,60 @@ def get_colors(color_flag=True):
     return colors
 
 
+def forecast_line_format(box_width, *args):
+    """ takes some args, formats them to fit into a certain width
+    """
+    res = ''
+    margin = (box_width - 20) // 2
+    running_total = margin
+    res += ' ' * margin
+    for arg in args:
+        if isinstance(arg, str):
+            res += arg
+            if not arg.startswith('\033'):
+                running_total += len(arg)
+        if isinstance(arg, list):
+            for smarg in arg:
+                res += str(smarg)
+                if not str(smarg).startswith('\033'):
+                    running_total += len(str(smarg))
+    res += ' ' * (box_width - running_total)
+    return res
+
+
+def new_new_forecast_day_format(forecast_day, box_width, color_flag=True):
+    """ formats one day of a forecast, returned as a list of lines
+    """
+    res = []
+    COLORS = get_colors(color_flag=color_flag)
+    # margin = (box_width - 20) // 2
+    # res.append('{}{}'.format('+', '-' * (box_width - 1)))
+    # TODO: each line requires a call to a formatting func, passed the COLORS,
+    # the label, and the forecast_day keys. Func totals up the length of the
+    # text to determine padding, THEN does the formatting and returns the line.
+    # This will fix the issue where the COLORS info is counted when determining
+    # the length of the text for end padding
+    formats = ['', [forecast_day['date']['weekday'], ', ',
+                    forecast_day['date']['monthname'], ' ',
+                    forecast_day['date']['day']],
+                   ['{:>10}'.format('high: '), COLORS.high,
+                    forecast_day['high']['fahrenheit'], COLORS.clear],
+                   ['{:>10}'.format('low: '), COLORS.low,
+                    forecast_day['low']['fahrenheit'], COLORS.clear],
+                   ['{:>10}'.format('weather: '), COLORS.cond,
+                    forecast_day['conditions'][:10], COLORS.clear],
+               '',
+                   ['{:>10}'.format('wind: '), COLORS.wind,
+                    forecast_day['avewind']['mph'],
+                    forecast_day['avewind']['dir'],
+                    COLORS.clear],
+               ''
+               ]
+    for frm in formats:
+        res.append(forecast_line_format(box_width, frm))
+    return res
+
+
 def new_forecast_day_format(forecast_day, box_width, color_flag=False):
     """ formats one day of a forecast, returned as a list of lines
     """
@@ -215,13 +269,13 @@ def grid_forecast(weat_db):
         # if the start of a row the whole list gets popped on there...
         if len(res[day_index//cols]) == 0:
             res[day_index//cols] = add_box_lines(
-                new_forecast_day_format(weat_db[day_index], box_width),
+                new_new_forecast_day_format(weat_db[day_index], box_width),
                 day_index, day_nums, cols)
         # or we have to add line by line
         else:
-            temp = add_box_lines(new_forecast_day_format(weat_db[day_index],
-                                                         box_width),
-                                 day_index, day_nums, cols)
+            temp = add_box_lines(new_new_forecast_day_format(
+                weat_db[day_index], box_width),
+                day_index, day_nums, cols)
             for lin in range(len(temp)):
                 res[day_index//cols][lin] += temp[lin]
 
