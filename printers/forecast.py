@@ -123,24 +123,43 @@ def new_new_forecast_day_format(forecast_day, box_width, color_flag=True):
     # text to determine padding, THEN does the formatting and returns the line.
     # This will fix the issue where the COLORS info is counted when determining
     # the length of the text for end padding
-    formats = ['', [forecast_day['date']['weekday'], ', ',
-                    forecast_day['date']['monthname'], ' ',
-                    forecast_day['date']['day']],
-                   ['{:>10}'.format('high: '), COLORS.high,
-                    forecast_day['high']['fahrenheit'], COLORS.clear],
-                   ['{:>10}'.format('low: '), COLORS.low,
-                    forecast_day['low']['fahrenheit'], COLORS.clear],
-                   ['{:>10}'.format('weather: '), COLORS.cond,
-                    forecast_day['conditions'][:10], COLORS.clear],
-               '',
-                   ['{:>10}'.format('wind: '), COLORS.wind,
-                    forecast_day['avewind']['mph'],
-                    forecast_day['avewind']['dir'],
-                    COLORS.clear],
-               ''
-               ]
-    for frm in formats:
-        res.append(forecast_line_format(box_width, frm))
+    lines = [[''],
+             [forecast_day['date']['weekday'], ', ',
+              forecast_day['date']['monthname'], ' ',
+              forecast_day['date']['day']],
+             ['{:>10}'.format('high: '), COLORS.high,
+              forecast_day['high']['fahrenheit'], COLORS.clear],
+             ['{:>10}'.format('low: '), COLORS.low,
+              forecast_day['low']['fahrenheit'], COLORS.clear],
+             ['{:>10}'.format('wind: '), COLORS.wind,
+              forecast_day['avewind']['mph'],
+              forecast_day['avewind']['dir'],
+              COLORS.clear],
+             ['']
+             ]
+    if len(forecast_day['conditions']) <= 10:
+        lines.insert(4, ['{:>10}'.format('weather: '), COLORS.cond,
+                         forecast_day['conditions'][:10], COLORS.clear])
+        lines.insert(5, [''])
+    elif len(forecast_day['conditions']) <= 20:
+        lines.insert(4, ['{:>10}'.format('weather: '), COLORS.clear])
+        lines.insert(5, [COLORS.cond,
+                         '{:>{width}}'.format(forecast_day['conditions'][:20],
+                                              width=20),
+                         COLORS.clear])
+    else:
+        first_line = ''
+        second_line = forecast_day['conditions'].split()
+        while len(first_line) < 10:
+            first_line += second_line[0] + ' '
+            second_line = second_line[1:]
+        second_line = ' '.join(second_line)
+        lines.insert(4, ['{:>10}'.format('weather: '), COLORS.cond,
+                         first_line, COLORS.clear])
+        lines.insert(5, [COLORS.cond, '{:>20}'.format(second_line),
+                         COLORS.clear])
+    for lin in lines:
+        res.append(forecast_line_format(box_width, lin))
     return res
 
 
