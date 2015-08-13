@@ -76,14 +76,18 @@ def get_colors(color_flag=True):
                       'high':  '',
                       'low':   '',
                       'cond':  '',
-                      'clear': ''}
+                      'clear': '',
+                      'hot':   '',
+                      'cool':  ''}
     else:
         color_info = {'temp':  "\033[1;34;47m",
                       'wind':  "\033[38;5;199m\033[48;5;157m",
                       'high':  "\033[1;34;47m",
                       'low':   "\033[1;34;47m",
                       'cond':  "\033[3;36;47m",
-                      'clear': "\033[0m"}
+                      'clear': "\033[0m",
+                      'hot':   "\033[38;5;160m\033[48;5;007m",
+                      'cool':  "\033[38;5;020m\033[48;5;155m"}
 
     for key in color_info.keys():
         setattr(colors, key, color_info[key])
@@ -91,7 +95,7 @@ def get_colors(color_flag=True):
 
 
 def forecast_line_format(box_width, *args):
-    """ takes some args, formats them to fit into a certain width
+    """ formats a list of strs to a length, accounting for non-printing chars
     """
     res = ''
     margin = (box_width - 20) // 2
@@ -111,7 +115,8 @@ def forecast_line_format(box_width, *args):
     return res
 
 
-def new_new_forecast_day_format(forecast_day, box_width, color_flag=True):
+def new_new_forecast_day_format(forecast_day, box_width, today_h, today_l,
+                                color_flag=True):
     """ formats one day of a forecast, returned as a list of lines
     """
     res = []
@@ -123,13 +128,19 @@ def new_new_forecast_day_format(forecast_day, box_width, color_flag=True):
     # text to determine padding, THEN does the formatting and returns the line.
     # This will fix the issue where the COLORS info is counted when determining
     # the length of the text for end padding
+    this_h = forecast_day['high']['fahrenheit']
+    this_l = forecast_day['low']['fahrenheit']
     lines = [[''],
              [forecast_day['date']['weekday'], ', ',
               forecast_day['date']['monthname'], ' ',
               forecast_day['date']['day']],
-             ['{:>10}'.format('high: '), COLORS.high,
+             ['{:>10}'.format('high: '),
+              COLORS.hot if this_h > today_h else COLORS.cool if this_h
+              < today_h else COLORS.high,
               forecast_day['high']['fahrenheit'], COLORS.clear],
-             ['{:>10}'.format('low: '), COLORS.low,
+             ['{:>10}'.format('low: '),
+              COLORS.hot if this_l > today_l else COLORS.cool if this_l
+              < today_l else COLORS.low,
               forecast_day['low']['fahrenheit'], COLORS.clear],
              ['{:>10}'.format('wind: '), COLORS.wind,
               forecast_day['avewind']['mph'],
@@ -137,6 +148,7 @@ def new_new_forecast_day_format(forecast_day, box_width, color_flag=True):
               COLORS.clear],
              ['']
              ]
+    # Here we have to react to the unpredictable:
     if len(forecast_day['conditions']) <= 10:
         lines.insert(4, ['{:>10}'.format('weather: '), COLORS.cond,
                          forecast_day['conditions'][:10], COLORS.clear])
@@ -149,7 +161,7 @@ def new_new_forecast_day_format(forecast_day, box_width, color_flag=True):
                          COLORS.clear])
     else:
         first_line = ''
-        second_line = forecast_day['conditions'].split()
+        second_line = forecast_day['conditions'][:box_width].split()
         while len(first_line) < 10:
             first_line += second_line[0] + ' '
             second_line = second_line[1:]
@@ -222,17 +234,17 @@ def add_box_lines(lins, day_num, total_days, cols_nums):
         """
     new_lins = []
     left_marker = '+'
-    left_horizontal = '|'
+    left_vertical = '|'
     grid_line = '-' * len(lins[0])
     if ((day_num + 1) % cols_nums == 0) or (day_num + 1 == total_days):
-        right_horizontal = '|'
+        right_vertical = '|'
         right_marker = '+'
     else:
-        right_horizontal, right_marker = '', ''
+        right_vertical, right_marker = '', ''
     # left, maybe right:
     for lin in lins:
-        new_lins.append("{}{}{}".format(left_horizontal,
-                                        lin, right_horizontal))
+        new_lins.append("{}{}{}".format(left_vertical, lin,
+                                        right_vertical))
     # bottom:
     new_lins.append("{}{}{}".format(left_marker, grid_line, right_marker))
     # top:
@@ -288,12 +300,16 @@ def grid_forecast(weat_db):
         # if the start of a row the whole list gets popped on there...
         if len(res[day_index//cols]) == 0:
             res[day_index//cols] = add_box_lines(
-                new_new_forecast_day_format(weat_db[day_index], box_width),
+                new_new_forecast_day_format(weat_db[day_index], box_width,
+                                            weat_db[0]['high']['fahrenheit'],
+                                            weat_db[0]['low']['fahrenheit']),
                 day_index, day_nums, cols)
         # or we have to add line by line
         else:
             temp = add_box_lines(new_new_forecast_day_format(
-                weat_db[day_index], box_width),
+                weat_db[day_index], box_width,
+                weat_db[0]['high']['fahrenheit'],
+                weat_db[0]['low']['fahrenheit']),
                 day_index, day_nums, cols)
             for lin in range(len(temp)):
                 res[day_index//cols][lin] += temp[lin]
