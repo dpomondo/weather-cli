@@ -64,36 +64,6 @@ def lines_forecast(weat_db):
     return res
 
 
-def get_colors(color_flag=True):
-    """ Return object with color information.
-    """
-    class Colors:
-        pass
-    colors = Colors()
-    if color_flag is False:
-        color_info = {'temp':  '',
-                      'wind':  '',
-                      'high':  '',
-                      'low':   '',
-                      'cond':  '',
-                      'clear': '',
-                      'hot':   '',
-                      'cool':  ''}
-    else:
-        color_info = {'temp':  "\033[1;34;47m",
-                      'wind':  "\033[38;5;199m\033[48;5;157m",
-                      'high':  "\033[1;34;47m",
-                      'low':   "\033[1;34;47m",
-                      'cond':  "\033[3;36;47m",
-                      'clear': "\033[0m",
-                      'hot':   "\033[38;5;160m\033[48;5;007m",
-                      'cool':  "\033[38;5;020m\033[48;5;155m"}
-
-    for key in color_info.keys():
-        setattr(colors, key, color_info[key])
-    return colors
-
-
 def forecast_line_format(box_width, *args):
     """ formats a list of strs to a length, accounting for non-printing chars
     """
@@ -116,11 +86,10 @@ def forecast_line_format(box_width, *args):
 
 
 def new_new_forecast_day_format(forecast_day, box_width, today_h, today_l,
-                                color_flag=True):
+                                COLORS):
     """ formats one day of a forecast, returned as a list of lines
     """
     res = []
-    COLORS = get_colors(color_flag=color_flag)
     # margin = (box_width - 20) // 2
     # res.append('{}{}'.format('+', '-' * (box_width - 1)))
     # TODO: each line requires a call to a formatting func, passed the COLORS,
@@ -175,11 +144,10 @@ def new_new_forecast_day_format(forecast_day, box_width, today_h, today_l,
     return res
 
 
-def new_forecast_day_format(forecast_day, box_width, color_flag=False):
+def new_forecast_day_format(forecast_day, box_width, COLORS):
     """ formats one day of a forecast, returned as a list of lines
     """
     res = []
-    COLORS = get_colors(color_flag=color_flag)
     margin = (box_width - 20) // 2
     # res.append('{}{}'.format('+', '-' * (box_width - 1)))
     # TODO: each line requires a call to a formatting func, passed the COLORS,
@@ -282,9 +250,11 @@ def forecast_day_format(forecast_day, lin_row, box_width):
 
 def grid_forecast(weat_db):
     # first, initialize all the vars
+    color_flag = True   # this will eventually get set in a config file
     num_days = len(weat_db)
     width = printers.utilities.get_terminal_width()
     height = printers.utilities.get_terminal_height()
+    COLORS = printers.utilities.get_colors(color_flag=color_flag)
     max_cols, box_width = get_box_size(len(weat_db), width)
     cols = min(max_cols, width//box_width)
     rows = math.ceil(num_days/cols)
@@ -302,14 +272,16 @@ def grid_forecast(weat_db):
             res[day_index//cols] = add_box_lines(
                 new_new_forecast_day_format(weat_db[day_index], box_width,
                                             weat_db[0]['high']['fahrenheit'],
-                                            weat_db[0]['low']['fahrenheit']),
+                                            weat_db[0]['low']['fahrenheit'],
+                                            COLORS),
                 day_index, day_nums, cols)
         # or we have to add line by line
         else:
             temp = add_box_lines(new_new_forecast_day_format(
                 weat_db[day_index], box_width,
                 weat_db[0]['high']['fahrenheit'],
-                weat_db[0]['low']['fahrenheit']),
+                weat_db[0]['low']['fahrenheit'],
+                COLORS),
                 day_index, day_nums, cols)
             for lin in range(len(temp)):
                 res[day_index//cols][lin] += temp[lin]
