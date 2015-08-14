@@ -131,9 +131,9 @@ def update(verbose=False, check_time=True):
     db_target = config.loaders.day_file_name()
     # trying this out, if it fails the try..finally.. logic below should
     # be uncommented, and lines 136-170 indented
-    weat_db_file = shelve.open(db_target)
 
     try:
+        weat_db_file = shelve.open(db_target)
         if check_time and ('current_response' in weat_db_file):
             if response_age(weat_db_file['current_response']) < time_out:
                 if verbose:
@@ -148,7 +148,7 @@ def update(verbose=False, check_time=True):
         except Exception as e:
             # print("{} caught in getter.update".format(e))
             # sys.exit()
-            tb = sys.exec_info()[2]
+            tb = sys.exc_info()[2]
             raise e.with_traceback(tb)
         if now is not None and 'current_observation' in now:
             import pprint
@@ -171,7 +171,7 @@ def update(verbose=False, check_time=True):
                 print("weather_db has the following keys:")
                 pprint.pprint(keys)
     except Exception as e:
-        tb = sys.exec_info()[2]
+        tb = sys.exc_info()[2]
         raise e.with_traceback(tb)
     finally:
         weat_db_file.close()
@@ -264,8 +264,10 @@ def main():
                     loop_flag = False
                 elif args.hourly:
                     import printers.print_hourly
-                    printers.print_hourly.print_hourly(
+                    res = printers.print_hourly.print_hourly(
                         current['hourly_forecast'][0:13])
+                    for lin in res:
+                        print(lin)
                     loop_flag = False
                 elif args.forecast:
                     import printers.forecast

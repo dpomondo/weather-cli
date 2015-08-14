@@ -12,7 +12,7 @@ import subprocess
 
 
 def get_terminal_info(arg):
-    """ does what it says: returns terminal width as an int.
+    """ does what it says: returns terminal info given by arg.
 
     Stolen from:
     http://www.brandonrubin.me/2014/03/18/python-snippet-get-terminal-width/
