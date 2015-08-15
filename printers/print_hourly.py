@@ -39,8 +39,27 @@ def hourly_by_lines(hourly_wdb, width, height):
     return res
 
 
+def format_bar_hour(weat_hour):
+    res = []
+    for r in [weat_hour['temp']['english'], weat_hour['sky'],
+              weat_hour['pop'], "{}:{}".format(weat_hour['FCTTIME']['hour'],
+                                               weat_hour['FCTTIME']['min'])]:
+        res.append('{:^6}'.format(r))
+    return res
+
+
 def hourly_by_bars(hourly_wdb, width, height):
-    return []
+    res = [[]]
+    fins = []
+    _keys = ["Temp", "Cloud %", "Precip Chance", "Time"]
+    for k in _keys:
+        res[0].append("{:>{width}}: ".format(k, width=max(
+            list(len(z) for z in _keys))))
+    for i in range((width - max(list(len(z) for z in res[0])))//6):
+        res.append(format_bar_hour(hourly_wdb[i]))
+    for i in range(len(res[0])):
+        fins.append(''.join(z[i] for z in res))
+    return fins
 
 
 def main():
