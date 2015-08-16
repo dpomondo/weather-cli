@@ -39,24 +39,34 @@ def hourly_by_lines(hourly_wdb, width, height):
     return res
 
 
-def format_bar_hour(weat_hour):
+def format_bar_hour(weat_hour, COLOR, zero_hour):
     res = []
-    for r in [weat_hour['temp']['english'], weat_hour['sky'],
-              weat_hour['pop'], "{}:{}".format(weat_hour['FCTTIME']['hour'],
-                                               weat_hour['FCTTIME']['min'])]:
-        res.append('{:^6}'.format(r))
+    for r in [(('temp', 'english'), COLOR.hot, COLOR.cool),
+              (('sky', ), COLOR.hot, COLOR.cool),
+              (('pop', ), COLOR.hot, COLOR.cool),
+              ]:
+        target = weat_hour
+        currs = zero_hour
+        for z in r[0]:
+            target = target[z]
+            currs = currs[z]
+        res.append('{}{:^6}{}'.format(COLOR.hot if target > currs else
+            COLOR.cool if target < currs else COLOR.temp, target, COLOR.clear))
+    res.append("{:^6}".format("{}:{}".format(weat_hour['FCTTIME']['hour'],
+                                             weat_hour['FCTTIME']['min'])))
     return res
 
 
 def hourly_by_bars(hourly_wdb, width, height):
     res = [[]]
     fins = []
+    COLORS = printers.utilities.get_colors()
     _keys = ["Temp", "Cloud %", "Precip Chance", "Time"]
     for k in _keys:
         res[0].append("{:>{width}}: ".format(k, width=max(
             list(len(z) for z in _keys))))
     for i in range((width - max(list(len(z) for z in res[0])))//6):
-        res.append(format_bar_hour(hourly_wdb[i]))
+        res.append(format_bar_hour(hourly_wdb[i], COLORS, hourly_wdb[0]))
     for i in range(len(res[0])):
         fins.append(''.join(z[i] for z in res))
     return fins
