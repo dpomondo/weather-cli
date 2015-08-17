@@ -52,8 +52,18 @@ def get_colors(color_flag=True):
                       'cond':  '',
                       'clear': '',
                       'hot':   '',
-                      'cool':  ''}
+                      'cool':  '',
+                      'night': '',
+                      'dusk':  '',
+                      'dawn':  '',
+                      'day':   ''}
     else:
+        # https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
+        # \033[_;__;__m     --> first:  character effect
+        #                       second: foreground color
+        #                       third:  background color
+        # \033[38;5;___m    --> extended foreground color (0...255)
+        # \033[48;5;___m    --> extended background color (0...255)
         color_info = {'temp':  "\033[1;34;47m",
                       'wind':  "\033[38;5;199m\033[48;5;157m",
                       'high':  "\033[1;34;47m",
@@ -61,7 +71,11 @@ def get_colors(color_flag=True):
                       'cond':  "\033[3;36;47m",
                       'clear': "\033[0m",
                       'hot':   "\033[38;5;160m\033[48;5;007m",
-                      'cool':  "\033[38;5;020m\033[48;5;155m"}
+                      'cool':  "\033[38;5;020m\033[48;5;155m",
+                      'night': "\033[38;5;015m\033[48;5;017m",
+                      'dusk':  "\033[38;5;015m\033[48;5;020m",
+                      'dawn':  "\033[38;5;000m\033[48;5;172m",
+                      'day':   "\033[38;5;000m\033[48;5;226m"}
 
     for key in color_info.keys():
         setattr(colors, key, color_info[key])

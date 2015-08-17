@@ -265,7 +265,7 @@ def main():
                 elif args.hourly:
                     import printers.print_hourly
                     res = printers.print_hourly.print_hourly(
-                        current['hourly_forecast'][0:13])
+                        current['hourly_forecast'], current['sun_phase'])
                     for lin in res:
                         print(lin)
                     loop_flag = False

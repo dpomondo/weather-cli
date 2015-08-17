@@ -104,12 +104,12 @@ def new_new_forecast_day_format(forecast_day, box_width, today_h, today_l,
               forecast_day['date']['monthname'], ' ',
               forecast_day['date']['day']],
              ['{:>10}'.format('high: '),
-              COLORS.hot if this_h > today_h else COLORS.cool if this_h
-              < today_h else COLORS.high,
+              COLORS.hot if this_h > today_h else
+              COLORS.cool if this_h < today_h else COLORS.high,
               forecast_day['high']['fahrenheit'], COLORS.clear],
              ['{:>10}'.format('low: '),
-              COLORS.hot if this_l > today_l else COLORS.cool if this_l
-              < today_l else COLORS.low,
+              COLORS.hot if this_l > today_l else
+              COLORS.cool if this_l < today_l else COLORS.low,
               forecast_day['low']['fahrenheit'], COLORS.clear],
              ['{:>10}'.format('wind: '), COLORS.wind,
               forecast_day['avewind']['mph'],
