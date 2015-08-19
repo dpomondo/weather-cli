@@ -286,6 +286,8 @@ def main():
         except KeyError as e:
             # update(verbose=args.verbose)
             print("KeyError caught: {}".format(e))
+            import traceback
+            traceback.print_exception(*sys.exc_info())
             loop_flag = False
         except Exception as e:
             # tb = sys.exc_info()[2]

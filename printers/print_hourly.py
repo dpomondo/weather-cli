@@ -39,20 +39,44 @@ def hourly_by_lines(hourly_wdb, width, height):
     return res
 
 
+def bar_temp_color(target, curr, COLOR):
+    return (COLOR.hot if target > curr else
+            COLOR.cool if target < curr else
+            COLOR.temp)
+
+
+def bar_cloud_color(target, _,  COLOR):
+    return (COLOR.cloud25 if target < 25 else
+            COLOR.cloud50 if target < 50 else
+            COLOR.cloud75 if target < 75 else
+            COLOR.cloud100)
+
+
+def bar_precip_color(target, _,  COLOR):
+    return (COLOR.precip25 if target < 25 else
+            COLOR.precip50 if target < 50 else
+            COLOR.precip75 if target < 75 else
+            COLOR.precip100)
+
+
+def bar_wind_color(target, curr, COLOR):
+    return bar_temp_color(target, curr, COLOR)
+
+
 def format_bar_hour(weat_hour, COLOR, zero_hour, sunrise, sunset):
     res = []
-    for r in [(('temp', 'english'), COLOR.hot, COLOR.cool),
-              (('sky', ), COLOR.hot, COLOR.cool),
-              (('pop', ), COLOR.hot, COLOR.cool),
-              (('wspd', 'english'), COLOR.hot, COLOR.cool)
-              ]:
+    # the COLOR attrs need to be func returning color codes; this lets each
+    # feature have drastically different color logic
+    for r in [(('temp', 'english'), bar_temp_color),
+              (('sky', ), bar_cloud_color),
+              (('pop', ), bar_precip_color),
+              (('wspd', 'english'), bar_wind_color)]:
         target = weat_hour
         currs = zero_hour
         for z in r[0]:
             target = target[z]
             currs = currs[z]
-        res.append('{}{:^6}{}'.format(r[1] if target > currs else
-                                      r[2] if target < currs else COLOR.temp,
+        res.append('{}{:^6}{}'.format(r[1](int(target), int(currs), COLOR),
                                       target, COLOR.clear))
     res.append("{}{:^6}{}".format(
         sunrise_sunset_color(weat_hour['FCTTIME']['hour'],
@@ -88,8 +112,8 @@ def sunrise_sunset_time(hour, sunrise, sunset):
     """ Determines whether a given hour includes sunrise or sunset.
 
         args:   hour: string indicating an hour ('0' to '23')
-                sunrise: tuple of two strings, hour and minute
-                sunset: tuple including two strings, hour and minute
+                sunrise: tuple of two strings, representing hour and minute
+                sunset: tuple of two strings, representing hour and minute
 
         Returns:    empty string if the given hour does NOT include rise/set,
                     formatted sunrise time if given hour includes sunrise,
@@ -104,7 +128,7 @@ def sunrise_sunset_time(hour, sunrise, sunset):
 def hourly_by_bars(hourly_wdb, width, height, sun_wdb):
     res = [[]]
     fins = []
-    COLORS = printers.utilities.get_colors()
+    COLORS = printers.utilities.get_colors(color_flag=True)
     _keys = ["Temp", "Cloud %", "Precip Chance", "Wind speed",
              "Sunrise/set", "Time"]
     for k in _keys:
