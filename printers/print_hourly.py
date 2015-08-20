@@ -9,7 +9,7 @@
 # -----------------------------------------------------------------------------
 
 import sys
-# import math
+import math
 if '/usr/self/weather' not in sys.path:
     sys.path.append('/usr/self/weather/')
 import printers.utilities
@@ -18,10 +18,11 @@ import printers.utilities
 def print_hourly(hourly_wdb, sun_wdb, frmt='bars'):
     width = printers.utilities.get_terminal_width()
     height = printers.utilities.get_terminal_height()
+    COLORS = printers.utilities.get_colors(color_flag=True)
     if frmt == 'lines':
         res = hourly_by_lines(hourly_wdb, width, height)
     if frmt == 'bars':
-        res = hourly_by_bars(hourly_wdb, width, height, sun_wdb)
+        res = hourly_by_bars(hourly_wdb, width, height, sun_wdb, COLORS)
     return res
 
 
@@ -125,10 +126,9 @@ def sunrise_sunset_time(hour, sunrise, sunset):
             else "")
 
 
-def hourly_by_bars(hourly_wdb, width, height, sun_wdb):
+def hourly_by_bars(hourly_wdb, width, height, sun_wdb, COLORS):
     res = [[]]
     fins = []
-    COLORS = printers.utilities.get_colors(color_flag=True)
     _keys = ["Temp", "Cloud %", "Precip Chance", "Wind speed",
              "Sunrise/set", "Time"]
     for k in _keys:
@@ -144,6 +144,38 @@ def hourly_by_bars(hourly_wdb, width, height, sun_wdb):
     return fins
 
 
+def cols_formatter(_l):
+    def indexer(_x):
+        # return height - math.floor((_x - mn) / diff * height)
+        return height - round((_x - mn) / diff * height)
+    l = list(map(int, _l))
+    res = []
+    start = l[0]
+    mx = max(l)
+    mn = min(l)
+    height = 11
+    diff = mx - mn
+    #  rng = diff / height
+    #  print("min: {} max: {} diff: {}".format(mn, mx, diff))
+    for i in range(height + 1):
+        res.append("")
+    star_index = indexer(start)
+    for num in l:
+        index = indexer(num)
+        for j in range(height + 1):
+            zing = ""
+            if j == index:
+                zing = num
+            elif j > index and j <= star_index:
+                zing = "++"
+            elif j < index and j >= star_index:
+                zing = "--"
+            else:
+                zing = ""
+            res[j] += "{:^6}".format(zing)
+    return res
+
+
 def main():
     """ testing!
     """
@@ -157,6 +189,11 @@ def main():
     nerd = print_hourly(now['hourly_forecast'], now['sun_phase'], frmt='bars')
     for lin in nerd:
         print(lin)
+    zing = list(z['temp']['english'] for z in now['hourly_forecast'])
+    nerd = cols_formatter(zing)
+    width = printers.utilities.get_terminal_width()
+    for lin in nerd:
+        print(lin[:min(width, len(lin))])
 
 
 if __name__ == '__main__':
