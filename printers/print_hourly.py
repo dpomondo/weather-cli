@@ -9,7 +9,7 @@
 # -----------------------------------------------------------------------------
 
 import sys
-import math
+# import math
 if '/usr/self/weather' not in sys.path:
     sys.path.append('/usr/self/weather/')
 import printers.utilities
@@ -23,6 +23,8 @@ def print_hourly(hourly_wdb, sun_wdb, frmt='bars'):
         res = hourly_by_lines(hourly_wdb, width, height)
     if frmt == 'bars':
         res = hourly_by_bars(hourly_wdb, width, height, sun_wdb, COLORS)
+    if frmt == 'cols':
+        res = hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS)
     return res
 
 
@@ -64,31 +66,6 @@ def bar_wind_color(target, curr, COLOR):
     return bar_temp_color(target, curr, COLOR)
 
 
-def format_bar_hour(weat_hour, COLOR, zero_hour, sunrise, sunset):
-    res = []
-    # the COLOR attrs need to be func returning color codes; this lets each
-    # feature have drastically different color logic
-    for r in [(('temp', 'english'), bar_temp_color),
-              (('sky', ), bar_cloud_color),
-              (('pop', ), bar_precip_color),
-              (('wspd', 'english'), bar_wind_color)]:
-        target = weat_hour
-        currs = zero_hour
-        for z in r[0]:
-            target = target[z]
-            currs = currs[z]
-        res.append('{}{:^6}{}'.format(r[1](int(target), int(currs), COLOR),
-                                      target, COLOR.clear))
-    res.append("{}{:^6}{}".format(
-        sunrise_sunset_color(weat_hour['FCTTIME']['hour'],
-                             sunrise, sunset, COLOR),
-        sunrise_sunset_time(weat_hour['FCTTIME']['hour'], sunrise, sunset),
-        COLOR.clear))
-    res.append("{:^6}".format("{}:{}".format(weat_hour['FCTTIME']['hour'],
-                                             weat_hour['FCTTIME']['min'])))
-    return res
-
-
 def sunrise_sunset_color(hour, sunrise, sunset, CLR):
     """ Returns a color code depending on distance from sunrise/sunset
 
@@ -126,6 +103,39 @@ def sunrise_sunset_time(hour, sunrise, sunset):
             else "")
 
 
+def format_bar(color_func, target, curr, COLOR, width):
+    """ returns a formatted string with color escape codes
+    """
+    return "{}{:^{wid}}{}".format(color_func(target, curr, COLOR),
+                                  target, COLOR.clear, wid=width)
+
+
+def format_bar_hour(weat_hour, COLOR, zero_hour, sunrise, sunset):
+    """ for each hour, return a vertical set of strings with the formatted info
+    """
+    res = []
+    for r in [(('temp', 'english'), bar_temp_color),
+              (('sky', ), bar_cloud_color),
+              (('pop', ), bar_precip_color),
+              (('wspd', 'english'), bar_wind_color)]:
+        target = weat_hour
+        currs = zero_hour
+        for z in r[0]:
+            target = target[z]
+            currs = currs[z]
+        res.append(format_bar(r[1], int(target), int(currs), COLOR, width=6))
+    # TODO: if sunrise_sunset_color can get wrangled into the standard
+    # color_func api, we can move this to a format_bar call:
+    res.append("{}{:^6}{}".format(
+        sunrise_sunset_color(weat_hour['FCTTIME']['hour'],
+                             sunrise, sunset, COLOR),
+        sunrise_sunset_time(weat_hour['FCTTIME']['hour'], sunrise, sunset),
+        COLOR.clear))
+    res.append("{:^6}".format("{}:{}".format(weat_hour['FCTTIME']['hour'],
+                                             weat_hour['FCTTIME']['min'])))
+    return res
+
+
 def hourly_by_bars(hourly_wdb, width, height, sun_wdb, COLORS):
     res = [[]]
     fins = []
@@ -144,35 +154,46 @@ def hourly_by_bars(hourly_wdb, width, height, sun_wdb, COLORS):
     return fins
 
 
-def cols_formatter(_l):
+def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS):
+    """ for each bit of info, format the entire horizontal string at once
+
+        And yes, that means `hourly_by_cols` and `hourly_by_bars` are named
+        exactly backwards...
+    """
+    res = []
+
+
+def cols_formatter(_l, COLOR, color_func, height=11):
     def indexer(_x):
         # return height - math.floor((_x - mn) / diff * height)
-        return height - round((_x - mn) / diff * height)
+        # return (height - 1) - math.floor((_x - mn) / diff * (height - 1))
+        # return (height - 1) - math.ceil((_x - mn) / diff * (height - 1))
+        # return (height - 1) - round((_x - mn) / diff * (height - 1))
+        return (height - 1) - int((_x - mn) / diff * (height - 1))
     l = list(map(int, _l))
     res = []
     start = l[0]
     mx = max(l)
     mn = min(l)
-    height = 11
     diff = mx - mn
     #  rng = diff / height
     #  print("min: {} max: {} diff: {}".format(mn, mx, diff))
-    for i in range(height + 1):
+    for i in range(height):
         res.append("")
     star_index = indexer(start)
     for num in l:
         index = indexer(num)
-        for j in range(height + 1):
+        for j in range(height):
             zing = ""
             if j == index:
-                zing = num
+                zing = color_func(num, start, COLOR), num, COLOR.clear
             elif j > index and j <= star_index:
-                zing = "++"
+                zing = color_func(num, start, COLOR), "++", COLOR.clear
             elif j < index and j >= star_index:
-                zing = "--"
+                zing = color_func(num, start, COLOR), "--", COLOR.clear
             else:
-                zing = ""
-            res[j] += "{:^6}".format(zing)
+                zing = COLOR.clear, "", COLOR.clear
+            res[j] += "{}{:^6}{}".format(*zing)
     return res
 
 
@@ -189,11 +210,12 @@ def main():
     nerd = print_hourly(now['hourly_forecast'], now['sun_phase'], frmt='bars')
     for lin in nerd:
         print(lin)
-    zing = list(z['temp']['english'] for z in now['hourly_forecast'])
-    nerd = cols_formatter(zing)
+    COLORS = printers.utilities.get_colors(color_flag=True)
     width = printers.utilities.get_terminal_width()
+    zing = list(z['temp']['english'] for z in now['hourly_forecast'])
+    nerd = cols_formatter(zing[:width//6], COLORS, bar_temp_color)
     for lin in nerd:
-        print(lin[:min(width, len(lin))])
+        print(lin)
 
 
 if __name__ == '__main__':
