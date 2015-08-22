@@ -21,10 +21,12 @@ def print_hourly(hourly_wdb, sun_wdb, frmt='bars'):
     COLORS = printers.utilities.get_colors(color_flag=True)
     if frmt == 'lines':
         res = hourly_by_lines(hourly_wdb, width, height)
-    if frmt == 'bars':
+    elif frmt == 'bars':
         res = hourly_by_bars(hourly_wdb, width, height, sun_wdb, COLORS)
-    if frmt == 'cols':
+    elif frmt == 'cols':
         res = hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS)
+    else:
+        res = hourly_by_lines(hourly_wdb, width, height)
     return res
 
 
@@ -111,7 +113,7 @@ def format_bar(color_func, target, curr, COLOR, width):
 
 
 def format_bar_hour(weat_hour, COLOR, zero_hour, sunrise, sunset):
-    """ for each hour, return a vertical set of strings with the formatted info
+    """ return a vertical set of strings, one hour of info
     """
     res = []
     for r in [(('temp', 'english'), bar_temp_color),
@@ -136,7 +138,9 @@ def format_bar_hour(weat_hour, COLOR, zero_hour, sunrise, sunset):
     return res
 
 
-def hourly_by_bars(hourly_wdb, width, height, sun_wdb, COLORS):
+def hourly_by_bars(hourly_wdb, width, height, sun_wdb, COLORS, col_width=6):
+    """ for each hour, return a vertical set of strings with the formatted info
+    """
     res = [[]]
     fins = []
     _keys = ["Temp", "Cloud %", "Precip Chance", "Wind speed",
@@ -145,7 +149,7 @@ def hourly_by_bars(hourly_wdb, width, height, sun_wdb, COLORS):
         res[0].append("{:>{width}}: ".format(k,
                       width=max(list(len(z) for z in _keys))))
     # for i in range((width - max(list(len(z) for z in res[0])))//6):
-    for i in range((width - len(res[0][0])) // 6):
+    for i in range((width - len(res[0][0])) // col_width):
         res.append(format_bar_hour(hourly_wdb[i], COLORS, hourly_wdb[0],
                    (sun_wdb['sunrise']['hour'], sun_wdb['sunrise']['minute']),
                    (sun_wdb['sunset']['hour'], sun_wdb['sunset']['minute'])))
@@ -154,22 +158,56 @@ def hourly_by_bars(hourly_wdb, width, height, sun_wdb, COLORS):
     return fins
 
 
-def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS):
+def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=6):
     """ for each bit of info, format the entire horizontal string at once
 
         And yes, that means `hourly_by_cols` and `hourly_by_bars` are named
         exactly backwards...
     """
+    def eat_keys(_lis, _key_tup):
+        """ helper func
+        """
+        tar = _lis
+        for k in _key_tup:
+            tar = tar[k]
+        return tar
+    # begin main functioning!
     res = []
+    _keys = ["Temp", "Cloud %", "Precip Chance", "Wind speed",
+             "Sunrise/set", "Time"]
+    head = max(list(len(z) for z in _keys))
+    # build the basic info strings
+    for r in [("Temp", ('temp', 'english'), bar_temp_color, 11),
+              ("Cloud %", ('sky', ), bar_cloud_color, 1),
+              ("Precip Chance", ('pop', ), bar_precip_color, 1),
+              ("Wind speed", ('wspd', 'english'), bar_wind_color, 1)]:
+        _lis = list(eat_keys(hour, r[1]) for hour in hourly_wdb)
+        temp, str_ind = cols_formatter(_lis[:(width - head - 2) // col_width],
+                                       COLORS, r[2], r[3], col_width)
+        for lin in range(len(temp)):
+            res.append("{}{}".format("{:>{wid}}{}".format(r[0], ": ", wid=head)
+                       if lin == str_ind else " " * (head + 2), temp[lin]))
+    # build the time string
+    temp = "{:>{wid}}: ".format("Time", wid=head)
+    for hour in hourly_wdb[:(width - head - 2) // col_width]:
+        temp = "{}{:^{wid}}".format(temp, "{}:{}".format(eat_keys(hour,
+                                    ('FCTTIME', 'hour')), eat_keys(
+                                    hour, ('FCTTIME', 'min'))), wid=col_width)
+    res.append(temp)
+    # return the result!
+    return res
 
 
-def cols_formatter(_l, COLOR, color_func, height=11):
+def cols_formatter(_l, COLOR, color_func, col_height=11, col_width=6):
     def indexer(_x):
         # return height - math.floor((_x - mn) / diff * height)
         # return (height - 1) - math.floor((_x - mn) / diff * (height - 1))
         # return (height - 1) - math.ceil((_x - mn) / diff * (height - 1))
         # return (height - 1) - round((_x - mn) / diff * (height - 1))
-        return (height - 1) - int((_x - mn) / diff * (height - 1))
+        if col_height > 1 and diff > 0:
+            return (col_height - 1) - int((_x - mn) / diff * (col_height - 1))
+        else:
+            return 0
     l = list(map(int, _l))
     res = []
     start = l[0]
@@ -178,12 +216,12 @@ def cols_formatter(_l, COLOR, color_func, height=11):
     diff = mx - mn
     #  rng = diff / height
     #  print("min: {} max: {} diff: {}".format(mn, mx, diff))
-    for i in range(height):
+    for i in range(col_height):
         res.append("")
     star_index = indexer(start)
     for num in l:
         index = indexer(num)
-        for j in range(height):
+        for j in range(col_height):
             zing = ""
             if j == index:
                 zing = color_func(num, start, COLOR), num, COLOR.clear
@@ -193,8 +231,8 @@ def cols_formatter(_l, COLOR, color_func, height=11):
                 zing = color_func(num, start, COLOR), "--", COLOR.clear
             else:
                 zing = COLOR.clear, "", COLOR.clear
-            res[j] += "{}{:^6}{}".format(*zing)
-    return res
+            res[j] += "{}{:^{wid}}{}".format(*zing, wid=col_width)
+    return res, star_index
 
 
 def main():
@@ -210,10 +248,12 @@ def main():
     nerd = print_hourly(now['hourly_forecast'], now['sun_phase'], frmt='bars')
     for lin in nerd:
         print(lin)
-    COLORS = printers.utilities.get_colors(color_flag=True)
-    width = printers.utilities.get_terminal_width()
-    zing = list(z['temp']['english'] for z in now['hourly_forecast'])
-    nerd = cols_formatter(zing[:width//6], COLORS, bar_temp_color)
+    print("Testing cols...")
+    # COLORS = printers.utilities.get_colors(color_flag=True)
+    # width = printers.utilities.get_terminal_width()
+    # zing = list(z['temp']['english'] for z in now['hourly_forecast'])
+    # nerd = cols_formatter(zing[:width//6], COLORS, bar_temp_color)
+    nerd = print_hourly(now['hourly_forecast'], now['sun_phase'], frmt='cols')
     for lin in nerd:
         print(lin)
 
