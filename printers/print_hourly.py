@@ -24,7 +24,8 @@ def print_hourly(hourly_wdb, sun_wdb, frmt='bars'):
     elif frmt == 'bars':
         res = hourly_by_bars(hourly_wdb, width, height, sun_wdb, COLORS)
     elif frmt == 'cols':
-        res = hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS)
+        res = hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS,
+                             col_width=6)
     else:
         res = hourly_by_lines(hourly_wdb, width, height)
     return res
@@ -158,7 +159,7 @@ def hourly_by_bars(hourly_wdb, width, height, sun_wdb, COLORS, col_width=6):
     return fins
 
 
-def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=6):
+def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
     """ for each bit of info, format the entire horizontal string at once
 
         And yes, that means `hourly_by_cols` and `hourly_by_bars` are named
@@ -176,23 +177,41 @@ def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=6):
     _keys = ["Temp", "Cloud %", "Precip Chance", "Wind speed",
              "Sunrise/set", "Time"]
     head = max(list(len(z) for z in _keys))
+    ind_slice = (width - head - 2) // col_width
     # build the basic info strings
     for r in [("Temp", ('temp', 'english'), bar_temp_color, 11),
               ("Cloud %", ('sky', ), bar_cloud_color, 1),
               ("Precip Chance", ('pop', ), bar_precip_color, 1),
               ("Wind speed", ('wspd', 'english'), bar_wind_color, 1)]:
         _lis = list(eat_keys(hour, r[1]) for hour in hourly_wdb)
-        temp, str_ind = cols_formatter(_lis[:(width - head - 2) // col_width],
-                                       COLORS, r[2], r[3], col_width)
+        temp, star_ind = cols_formatter(_lis[:ind_slice],
+                                        COLORS, r[2], r[3], col_width)
         for lin in range(len(temp)):
             res.append("{}{}".format("{:>{wid}}{}".format(r[0], ": ", wid=head)
-                       if lin == str_ind else " " * (head + 2), temp[lin]))
+                       if lin == star_ind else " " * (head + 2), temp[lin]))
+    # bnuild the sunrise/sunset string
+    temp = "{:>{wid}}: ".format("Sunrise/set", wid=head)
+    for hour in hourly_wdb[:ind_slice]:
+        temp = ("{}{}{:^{wid}}{}".format(temp,
+                sunrise_sunset_color(hour['FCTTIME']['hour'],
+                                     (sun_wdb['sunrise']['hour'],
+                                     sun_wdb['sunrise']['minute']),
+                                     (sun_wdb['sunset']['hour'],
+                                     sun_wdb['sunset']['minute']),
+                                     COLORS),
+                sunrise_sunset_time(hour['FCTTIME']['hour'],
+                                    (sun_wdb['sunrise']['hour'],
+                                    sun_wdb['sunrise']['minute']),
+                                    (sun_wdb['sunset']['hour'],
+                                    sun_wdb['sunset']['minute'])),
+                COLORS.clear, wid=col_width))
+    res.append(temp)
     # build the time string
     temp = "{:>{wid}}: ".format("Time", wid=head)
-    for hour in hourly_wdb[:(width - head - 2) // col_width]:
-        temp = "{}{:^{wid}}".format(temp, "{}:{}".format(eat_keys(hour,
-                                    ('FCTTIME', 'hour')), eat_keys(
-                                    hour, ('FCTTIME', 'min'))), wid=col_width)
+    for hour in hourly_wdb[:ind_slice]:
+        temp = "{}{:^{wid}}".format(temp, "{}:{}".format(
+            eat_keys(hour, ('FCTTIME', 'hour')),
+            eat_keys(hour, ('FCTTIME', 'min'))), wid=col_width)
     res.append(temp)
     # return the result!
     return res
