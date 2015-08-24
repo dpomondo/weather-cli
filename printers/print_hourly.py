@@ -121,11 +121,8 @@ def format_bar_hour(weat_hour, COLOR, zero_hour, sunrise, sunset):
               (('sky', ), bar_cloud_color),
               (('pop', ), bar_precip_color),
               (('wspd', 'english'), bar_wind_color)]:
-        target = weat_hour
-        currs = zero_hour
-        for z in r[0]:
-            target = target[z]
-            currs = currs[z]
+        target = eat_keys(weat_hour, r[0])
+        currs = eat_keys(zero_hour, r[0])
         res.append(format_bar(r[1], int(target), int(currs), COLOR, width=6))
     # TODO: if sunrise_sunset_color can get wrangled into the standard
     # color_func api, we can move this to a format_bar call:
@@ -159,25 +156,34 @@ def hourly_by_bars(hourly_wdb, width, height, sun_wdb, COLORS, col_width=6):
     return fins
 
 
+def eat_keys(_lis, _key_tup):
+    """ helper func
+    """
+    tar = _lis
+    for k in _key_tup:
+        tar = tar[k]
+    return tar
+
+
 def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
     """ for each bit of info, format the entire horizontal string at once
 
         And yes, that means `hourly_by_cols` and `hourly_by_bars` are named
         exactly backwards...
     """
-    def eat_keys(_lis, _key_tup):
-        """ helper func
-        """
-        tar = _lis
-        for k in _key_tup:
-            tar = tar[k]
-        return tar
     # begin main functioning!
     res = []
     _keys = ["Temp", "Cloud %", "Precip Chance", "Wind speed",
              "Sunrise/set", "Time"]
     head = max(list(len(z) for z in _keys))
     ind_slice = (width - head - 2) // col_width
+    # build the time string
+    temp = "{:>{wid}}: ".format("Time", wid=head)
+    for hour in hourly_wdb[:ind_slice]:
+        temp = "{}{:^{wid}}".format(temp, "{}:{}".format(
+            eat_keys(hour, ('FCTTIME', 'hour')),
+            eat_keys(hour, ('FCTTIME', 'min'))), wid=col_width)
+    res.append(temp)
     # build the basic info strings
     for r in [("Temp", ('temp', 'english'), bar_temp_color, 11),
               ("Cloud %", ('sky', ), bar_cloud_color, 1),
@@ -190,8 +196,26 @@ def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
             res.append("{}{}".format("{:>{wid}}{}".format(r[0], ": ", wid=head)
                        if lin == star_ind else " " * (head + 2), temp[lin]))
     # bnuild the sunrise/sunset string
+    temp = sunrise_line(hourly_wdb[:ind_slice], sun_wdb, COLORS,
+                        col_width=6, head=head)
+    res.append(temp)
+    #  # build the time string
+    #  temp = "{:>{wid}}: ".format("Time", wid=head)
+    #  for hour in hourly_wdb[:ind_slice]:
+        #  temp = "{}{:^{wid}}".format(temp, "{}:{}".format(
+            #  eat_keys(hour, ('FCTTIME', 'hour')),
+            #  eat_keys(hour, ('FCTTIME', 'min'))), wid=col_width)
+    #  res.append(temp)
+    #  insert a line before and after? No... let's not
+    #  res.insert(0, '-' * (head + col_width * ind_slice))
+    #  res.append('-' * (head + col_width * ind_slice))
+    # return the result!
+    return res
+
+
+def sunrise_line(hourly_wdb, sun_wdb, COLORS, col_width, head):
     temp = "{:>{wid}}: ".format("Sunrise/set", wid=head)
-    for hour in hourly_wdb[:ind_slice]:
+    for hour in hourly_wdb:
         temp = ("{}{}{:^{wid}}{}".format(temp,
                 sunrise_sunset_color(hour['FCTTIME']['hour'],
                                      (sun_wdb['sunrise']['hour'],
@@ -205,16 +229,7 @@ def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
                                     (sun_wdb['sunset']['hour'],
                                     sun_wdb['sunset']['minute'])),
                 COLORS.clear, wid=col_width))
-    res.append(temp)
-    # build the time string
-    temp = "{:>{wid}}: ".format("Time", wid=head)
-    for hour in hourly_wdb[:ind_slice]:
-        temp = "{}{:^{wid}}".format(temp, "{}:{}".format(
-            eat_keys(hour, ('FCTTIME', 'hour')),
-            eat_keys(hour, ('FCTTIME', 'min'))), wid=col_width)
-    res.append(temp)
-    # return the result!
-    return res
+    return temp
 
 
 def cols_formatter(_l, COLOR, color_func, col_height=11, col_width=6):
