@@ -165,6 +165,31 @@ def eat_keys(_lis, _key_tup):
     return tar
 
 
+def new_hourly_by_cols():
+    """ inputs:
+        format_dict ->  specifies the order in which data functions get
+                        called.
+                        form:
+                            {1: "Temp",
+                                2: "Cloud Cover"... etc}
+                        use:
+                        for n in range(len(format_dict)):
+                            function_dict[format_dict[n]]
+        function_dict -> specifies the function and parameters for each
+                        data function call.
+                        form:
+                            {"Temp": (temp_func, [db, color_func...]),
+                            {"Cloud Cover": (cloud_func, db, [...]),
+                                etc... }
+                        use:
+                            function_dict["xxx"][0](*function_dict["xxx"](1))
+                        example:
+                            "Temp": (cols_formater, [_lis[:ind_slice], ...])
+
+    """
+    pass
+
+
 def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
     """ for each bit of info, format the entire horizontal string at once
 
@@ -177,13 +202,13 @@ def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
              "Sunrise/set", "Time"]
     head = max(list(len(z) for z in _keys))
     ind_slice = (width - head - 2) // col_width
-    # build the time string
-    temp = "{:>{wid}}: ".format("Time", wid=head)
-    for hour in hourly_wdb[:ind_slice]:
-        temp = "{}{:^{wid}}".format(temp, "{}:{}".format(
-            eat_keys(hour, ('FCTTIME', 'hour')),
-            eat_keys(hour, ('FCTTIME', 'min'))), wid=col_width)
-    res.append(temp)
+    # # build the time string -- top
+    #  temp = "{:>{wid}}: ".format("Time", wid=head)
+    #  for hour in hourly_wdb[:ind_slice]:
+        #  temp = "{}{:^{wid}}".format(temp, "{}:{}".format(
+            #  eat_keys(hour, ('FCTTIME', 'hour')),
+            #  eat_keys(hour, ('FCTTIME', 'min'))), wid=col_width)
+    #  res.append(temp)
     # build the basic info strings
     for r in [("Temp", ('temp', 'english'), bar_temp_color, 11),
               ("Cloud %", ('sky', ), bar_cloud_color, 1),
@@ -199,18 +224,29 @@ def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
     temp = sunrise_line(hourly_wdb[:ind_slice], sun_wdb, COLORS,
                         col_width=6, head=head)
     res.append(temp)
-    #  # build the time string
-    #  temp = "{:>{wid}}: ".format("Time", wid=head)
-    #  for hour in hourly_wdb[:ind_slice]:
-        #  temp = "{}{:^{wid}}".format(temp, "{}:{}".format(
-            #  eat_keys(hour, ('FCTTIME', 'hour')),
-            #  eat_keys(hour, ('FCTTIME', 'min'))), wid=col_width)
-    #  res.append(temp)
+    # build the time string
+    temp = "{:>{wid}}: ".format("Time", wid=head)
+    for hour in hourly_wdb[:ind_slice]:
+        temp = "{}{:^{wid}}".format(temp, "{}:{}".format(
+            eat_keys(hour, ('FCTTIME', 'hour')),
+            eat_keys(hour, ('FCTTIME', 'min'))), wid=col_width)
+    res.append(temp)
     #  insert a line before and after? No... let's not
     #  res.insert(0, '-' * (head + col_width * ind_slice))
     #  res.append('-' * (head + col_width * ind_slice))
     # return the result!
     return res
+
+
+def new_sunrise_line(hourly_wdb, sun_wdb, COLORS, col_width, head):
+    temp = "{:>{wid}}: ".format("Sunrise/set", wid=head)
+    sunrise_hour = sun_wdb['sunrise']['hour']
+    sunrise_min = sun_wdb['sunrise']['min']
+    sunset_hour = sun_wdb['sunset']['hour']
+    sunset_min = sun_wdb['sunrise']['min']
+    index = 0
+    while index < col_width * len(hourly_wdb):
+        curr_hour = index // col_width
 
 
 def sunrise_line(hourly_wdb, sun_wdb, COLORS, col_width, head):
