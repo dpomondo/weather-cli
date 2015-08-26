@@ -224,6 +224,9 @@ def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
     temp = sunrise_line(hourly_wdb[:ind_slice], sun_wdb, COLORS,
                         col_width=6, head=head)
     res.append(temp)
+    temp = new_sunrise_line(hourly_wdb[:ind_slice], sun_wdb, COLORS,
+                            col_width=6, head=head)
+    res.append(temp)
     # build the time string
     temp = "{:>{wid}}: ".format("Time", wid=head)
     for hour in hourly_wdb[:ind_slice]:
@@ -239,14 +242,69 @@ def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
 
 
 def new_sunrise_line(hourly_wdb, sun_wdb, COLORS, col_width, head):
+    _hour_lis = list(eat_keys(hour, ('FCTTIME', 'hour')) for hour in
+                     hourly_wdb)
+    _min_lis = list(eat_keys(hour, ('FCTTIME', 'min')) for hour in
+                    hourly_wdb)
     temp = "{:>{wid}}: ".format("Sunrise/set", wid=head)
     sunrise_hour = sun_wdb['sunrise']['hour']
-    sunrise_min = sun_wdb['sunrise']['min']
+    sunrise_min = sun_wdb['sunrise']['minute']
+    if sunrise_hour in _hour_lis:
+        sunrise_index = ((_hour_lis.index(sunrise_hour) * col_width)
+                         + int(sunrise_min) // 10)
+    else:
+        sunrise_index = -1
     sunset_hour = sun_wdb['sunset']['hour']
-    sunset_min = sun_wdb['sunrise']['min']
+    sunset_min = sun_wdb['sunset']['minute']
+    if sunset_hour in _hour_lis:
+        sunset_index = ((_hour_lis.index(sunset_hour) * col_width)
+                        + int(sunset_min) // 10)
+    else:
+        sunset_index = -1
+    sunrise_str = "{}:{}".format(sunrise_hour, sunrise_min)
+    sunset_str = "{}:{}".format(sunset_hour, sunset_min)
     index = 0
-    while index < col_width * len(hourly_wdb):
-        curr_hour = index // col_width
+    tar_length = col_width * len(hourly_wdb)
+    while index < tar_length:
+        curr_hour = _hour_lis[index // col_width]
+        if index == sunrise_index:
+            temp = "{}{}{}".format(temp,
+                                   sunrise_sunset_color(curr_hour,
+                                                        (sunrise_hour,
+                                                         sunrise_min),
+                                                        (sunset_hour,
+                                                         sunset_min),
+                                                        COLORS),
+                                   sunrise_str[0])
+            sunrise_str = sunrise_str[1:]
+            index += 1
+            if len(sunrise_str) > 0:
+                sunrise_index += 1
+        elif index == sunset_index:
+            temp = "{}{}{}".format(temp,
+                                   sunrise_sunset_color(curr_hour,
+                                                        (sunrise_hour,
+                                                         sunrise_min),
+                                                        (sunset_hour,
+                                                         sunset_min),
+                                                        COLORS),
+                                   sunset_str[0])
+            sunset_str = sunset_str[1:]
+            index += 1
+            if len(sunset_str) > 0:
+                sunset_index += 1
+        else:
+            temp = "{}{}{}".format(temp,
+                                   sunrise_sunset_color(curr_hour,
+                                                        (sunrise_hour,
+                                                         sunrise_min),
+                                                        (sunset_hour,
+                                                         sunset_min),
+                                                        COLORS),
+                                   " ")
+            index += 1
+    temp += COLORS.clear
+    return temp
 
 
 def sunrise_line(hourly_wdb, sun_wdb, COLORS, col_width, head):
