@@ -132,8 +132,10 @@ def update(verbose=False, check_time=True):
     # trying this out, if it fails the try..finally.. logic below should
     # be uncommented, and lines 136-170 indented
 
+    weat_db_file_open_flag = False
     try:
         weat_db_file = shelve.open(db_target)
+        weat_db_file_open_flag = True
         if check_time and ('current_response' in weat_db_file):
             if response_age(weat_db_file['current_response']) < time_out:
                 if verbose:
@@ -174,7 +176,9 @@ def update(verbose=False, check_time=True):
         tb = sys.exc_info()[2]
         raise e.with_traceback(tb)
     finally:
-        weat_db_file.close()
+        if weat_db_file_open_flag is True:
+            weat_db_file.close()
+            weat_db_file_open_flag = False
 
 
 def print_bookkeeping(args, current_ob, weat_db):
