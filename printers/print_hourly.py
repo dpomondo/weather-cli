@@ -69,7 +69,7 @@ def bar_wind_color(target, curr, COLOR):
     return bar_temp_color(target, curr, COLOR)
 
 
-def sunrise_sunset_color(hour, sunrise, sunset, CLR):
+def sunrise_sunset_color(tim, sunrise, sunset, CLR):
     """ Returns a color code depending on distance from sunrise/sunset
 
         args:   hour: string representing an hour ('0' to '23')
@@ -81,6 +81,12 @@ def sunrise_sunset_color(hour, sunrise, sunset, CLR):
                     depending on the difference between the given hour and the
                     hour of sunrise/sunset.
     """
+    if isinstance(tim, tuple) or isinstance(tim, list):
+        hour = tim[0]
+    elif isinstance(tim, int) or isinstance(tim, str):
+        hour = tim
+    else:
+        raise ValueError("sunrise_sunset_colr passed bad value")
     set_dif = int(hour) - int(sunset[0])
     rise_dif = int(hour) - int(sunrise[0])
     return (CLR.dusk if set_dif > -1 and set_dif <= 1 else
@@ -230,7 +236,7 @@ def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
     # build the time string
     temp = "{:>{wid}}: ".format("Time", wid=head)
     for hour in hourly_wdb[:ind_slice]:
-        temp = "{}{:^{wid}}".format(temp, "{}:{}".format(
+        temp = "{}{:<{wid}}".format(temp, "{}:{}".format(
             eat_keys(hour, ('FCTTIME', 'hour')),
             eat_keys(hour, ('FCTTIME', 'min'))), wid=col_width)
     res.append(temp)
