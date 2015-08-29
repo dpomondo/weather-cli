@@ -9,7 +9,7 @@
 # -----------------------------------------------------------------------------
 
 import sys
-# import math
+#  import math
 if '/usr/self/weather' not in sys.path:
     sys.path.append('/usr/self/weather/')
 import printers.utilities
@@ -81,18 +81,32 @@ def sunrise_sunset_color(tim, sunrise, sunset, CLR):
                     depending on the difference between the given hour and the
                     hour of sunrise/sunset.
     """
-    if isinstance(tim, tuple) or isinstance(tim, list):
-        hour = tim[0]
+    if (isinstance(tim, tuple) or isinstance(tim, list)) and len(tim) == 2:
+        hour, minute = int(tim[0]), round(int(tim[1]))
     elif isinstance(tim, int) or isinstance(tim, str):
-        hour = tim
+        hour, minute = int(tim), 0
     else:
         raise ValueError("sunrise_sunset_colr passed bad value")
-    set_dif = int(hour) - int(sunset[0])
-    rise_dif = int(hour) - int(sunrise[0])
-    return (CLR.dusk if set_dif > -1 and set_dif <= 1 else
-            CLR.dawn if rise_dif >= -1 and rise_dif < 1 else
-            CLR.night if rise_dif * set_dif > 0 else
-            CLR.day)
+    set_hour_dif = hour - int(sunset[0])
+    set_min_dif = minute - round(int(sunset[1]) / 10) * 10
+    rise_hour_dif = hour - int(sunrise[0])
+    rise_min_dif = minute - round(int(sunrise[1]) / 10) * 10
+    if set_hour_dif == 0 and set_min_dif >= -10:
+        return CLR.dusk
+    elif set_hour_dif > 0 and set_hour_dif < 2:
+        return CLR.dusk
+    elif set_hour_dif == 2 and set_min_dif <= 0:
+        return CLR.dusk
+    elif rise_hour_dif == -2 and rise_min_dif >= 0:
+        return CLR.dawn
+    elif rise_hour_dif > -2 and rise_hour_dif < 0:
+        return CLR.dawn
+    elif rise_hour_dif == 0 and rise_min_dif <= 0:
+        return CLR.dawn
+    elif set_hour_dif * rise_hour_dif > 0:
+        return CLR.night
+    else:
+        return CLR.day
 
 
 def sunrise_sunset_time(hour, sunrise, sunset):
@@ -273,9 +287,10 @@ def new_sunrise_line(hourly_wdb, sun_wdb, COLORS, col_width, head):
     tar_length = col_width * len(hourly_wdb)
     while index < tar_length:
         curr_hour = _hour_lis[index // col_width]
+        curr_min = (index % col_width) * 10
         if index == sunrise_index:
             temp = "{}{}{}".format(temp,
-                                   sunrise_sunset_color(curr_hour,
+                                   sunrise_sunset_color((curr_hour, curr_min),
                                                         (sunrise_hour,
                                                          sunrise_min),
                                                         (sunset_hour,
@@ -288,7 +303,7 @@ def new_sunrise_line(hourly_wdb, sun_wdb, COLORS, col_width, head):
                 sunrise_index += 1
         elif index == sunset_index:
             temp = "{}{}{}".format(temp,
-                                   sunrise_sunset_color(curr_hour,
+                                   sunrise_sunset_color((curr_hour, curr_min),
                                                         (sunrise_hour,
                                                          sunrise_min),
                                                         (sunset_hour,
@@ -316,7 +331,7 @@ def new_sunrise_line(hourly_wdb, sun_wdb, COLORS, col_width, head):
 def sunrise_line(hourly_wdb, sun_wdb, COLORS, col_width, head):
     temp = "{:>{wid}}: ".format("Sunrise/set", wid=head)
     for hour in hourly_wdb:
-        temp = ("{}{}{:^{wid}}{}".format(temp,
+        temp = ("{}{}{:<{wid}}{}".format(temp,
                 sunrise_sunset_color(hour['FCTTIME']['hour'],
                                      (sun_wdb['sunrise']['hour'],
                                      sun_wdb['sunrise']['minute']),
