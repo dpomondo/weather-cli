@@ -11,7 +11,6 @@ if home_dir not in sys.path:
     sys.path.append(home_dir)
 import config.loaders
 # change allo these to function calls:
-time_out = 600
 
 
 def call_getter():
@@ -37,7 +36,7 @@ def temp_current_get(temp):
     return temp['current_observation']['temp_f']
 
 
-def main():
+def main(time_out=600):
     if not os.path.isfile(config.loaders.current_file_name()):
         call_getter()
     current = open_current_file()

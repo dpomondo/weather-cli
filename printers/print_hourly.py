@@ -250,7 +250,7 @@ def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
     # build the time string
     temp = "{:>{wid}}: ".format("Time", wid=head)
     for hour in hourly_wdb[:ind_slice]:
-        temp = "{}{:<{wid}}".format(temp, "{}:{}".format(
+        temp = "{}{:>{wid}}".format(temp, "{}:{}".format(
             eat_keys(hour, ('FCTTIME', 'hour')),
             eat_keys(hour, ('FCTTIME', 'min'))), wid=col_width)
     res.append(temp)
@@ -331,7 +331,7 @@ def new_sunrise_line(hourly_wdb, sun_wdb, COLORS, col_width, head):
 def sunrise_line(hourly_wdb, sun_wdb, COLORS, col_width, head):
     temp = "{:>{wid}}: ".format("Sunrise/set", wid=head)
     for hour in hourly_wdb:
-        temp = ("{}{}{:<{wid}}{}".format(temp,
+        temp = ("{}{}{:>{wid}}{}".format(temp,
                 sunrise_sunset_color(hour['FCTTIME']['hour'],
                                      (sun_wdb['sunrise']['hour'],
                                      sun_wdb['sunrise']['minute']),
