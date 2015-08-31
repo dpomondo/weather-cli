@@ -38,6 +38,15 @@ def get_terminal_width():
     return get_terminal_info('cols')
 
 
+def eat_keys(_lis, _key_tup):
+    """ helper func
+    """
+    tar = _lis
+    for k in _key_tup:
+        tar = tar[k]
+    return tar
+
+
 def get_colors(color_flag=True):
     """ Return object with color information.
     """
