@@ -53,26 +53,26 @@ def get_colors(color_flag=True):
     class Colors:
         pass
     colors = Colors()
-    # if color_flag is False:
-        # color_info = {'temp':  '',
-                      # 'wind':  '',
-                      # 'high':  '',
-                      # 'low':   '',
-                      # 'cond':  '',
-                      # 'clear': '',
-                      # 'hot':   '',
-                      # 'cool':  '',
-                      # 'night': '',
-                      # 'dusk':  '',
-                      # 'dawn':  '',
-                      # 'day':   ''}
-    # else:
-        # https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
-        # \033[_;__;__m     --> first:  character effect
-        #                       second: foreground color
-        #                       third:  background color
-        # \033[38;5;___m    --> extended foreground color (0...255)
-        # \033[48;5;___m    --> extended background color (0...255)
+    # # if color_flag is False:
+    #     # color_info = {'temp':  '',
+    #                   # 'wind':  '',
+    #                   # 'high':  '',
+    #                   # 'low':   '',
+    #                   # 'cond':  '',
+    #                   # 'clear': '',
+    #                   # 'hot':   '',
+    #                   # 'cool':  '',
+    #                   # 'night': '',
+    #                   # 'dusk':  '',
+    #                   # 'dawn':  '',
+    #                   # 'day':   ''}
+    # # else:
+    #     # https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
+    #     # \033[_;__;__m     --> first:  character effect
+    #     #                       second: foreground color
+    #     #                       third:  background color
+    #     # \033[38;5;___m    --> extended foreground color (0...255)
+    #     # \033[48;5;___m    --> extended background color (0...255)
     color_info = {'temp':  "\033[1;34;47m",
                   'wind':  "\033[38;5;199m\033[48;5;157m",
                   'high':  "\033[1;34;47m",
@@ -105,14 +105,76 @@ def get_colors(color_flag=True):
     return colors
 
 
+def max_len(_lis):
+    """ returns the max length of the items in a list
+    """
+    return max(list(len(x) for x in _lis))
+
+
+def indexer_maker(start, header=0, col_width=6):
+    """ returns a function to determine the index of an item.
+
+        start:      start time, as a tuple: ("hour", "min")
+        target:     item time, as a tuple
+        header:     length of header
+        col_width:  how wide each item will be in the final string
+    start_hour, start_min = int(start[0]), int(start[1])
+    """
+    start_hour, start_min = int(start[0]), int(start[1])
+
+    def index(hour, min, col_width):
+        return hour * col_width + int(min // (60 / col_width))
+
+    def maker(target):
+        """ input: tuple (or list) -> ("hour", "min")
+        """
+        target_hour, target_min = int(target[0]), int(target[1])
+        start_ind = index(start_hour, start_min, col_width)
+        target_ind = index(target_hour, target_min, col_width)
+        res = target_ind - start_ind
+        if res >= 0:
+            return header + res
+        else:
+            return header + target_ind + (index(24, 0, col_width) - start_ind)
+    return maker
+
+
 def main():
+    # test width func
     width = get_terminal_width()
     if width:
         print("{}: {}".format("width", width))
 
+    # test height func
     height = get_terminal_height()
     if height:
         print("{}: {}".format("height", height))
+
+    # test indexer_maker
+    col_width = 6
+    hours = list(str(x) for x in range(24))
+    mins = list("{:0>2}".format(x) for x in range(60))
+    import random
+    r = random.randint(0, len(hours))
+    #  heads = hours[r:] + hours[:r]
+    heads = hours
+    lis_len = (width - 8) // col_width
+    header = " " * 8
+    for tim in heads[:lis_len]:
+        header = "{}{:>{wid}}".format(header, "{}:{}".format(tim, "00"),
+                                      wid=col_width)
+    nerd = []
+    for i in range(10):
+        nerd.append((random.choice(hours), random.choice(mins)))
+    worker = indexer_maker((heads[0], "00"), header=8, col_width=col_width)
+    zerd = []
+    for tim in nerd:
+        temp = "{}:{}".format(*tim)
+        zerd.append("{:<8}{}{}".format(temp, "." * worker(tim), temp))
+    print(header)
+    for lin in zerd:
+        print(lin[:width])
+
 
 if __name__ == "__main__":
     main()
