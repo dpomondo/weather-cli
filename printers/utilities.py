@@ -133,9 +133,9 @@ def indexer_maker(start, header=0, col_width=6):
         target_ind = index(target_hour, target_min, col_width)
         res = target_ind - start_ind
         if res >= 0:
-            return header + res
+            return res
         else:
-            return header + target_ind + (index(24, 0, col_width) - start_ind)
+            return target_ind + (index(24, 0, col_width) - start_ind)
     return maker
 
 
@@ -161,7 +161,7 @@ def main():
     lis_len = (width - 8) // col_width
     header = " " * 8
     for tim in heads[:lis_len]:
-        header = "{}{:>{wid}}".format(header, "{}:{}".format(tim, "00"),
+        header = "{}{:-<{wid}}".format(header, "{}:{}".format(tim, "00"),
                                       wid=col_width)
     nerd = []
     for i in range(10):
