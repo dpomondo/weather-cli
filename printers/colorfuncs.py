@@ -22,6 +22,29 @@ def bar_wind_color(target, curr, COLOR):
     return bar_temp_color(target, curr, COLOR)
 
 
+def new_sunrise_sunset_color(tim, sunrise, sunset, COLOR, col_width=6):
+    """ Returns a color code depending on distance from sunrise/sunset
+    """
+    import sys
+    if '/usr/self/weather' not in sys.path:
+        sys.path.append('/usr/self/weather/')
+    import printers.utilities
+    zero_hour = printers.utilities.indexer_maker(('0', '0'))
+    rise_ind = zero_hour(sunrise)
+    set_ind = zero_hour(sunset)
+    time_ind = zero_hour(tim)
+    set_diff = set_ind - time_ind
+    rise_diff = rise_ind - time_ind
+    if set_diff <= 0 and set_diff > -2 * col_width:
+        return COLOR.dusk
+    elif rise_diff >= 0 and rise_diff < 2 * col_width:
+        return COLOR.dawn
+    elif rise_diff * set_diff > 0:
+        return COLOR.night
+    else:
+        return COLOR.day
+
+
 def sunrise_sunset_color(tim, sunrise, sunset, CLR):
     """ Returns a color code depending on distance from sunrise/sunset
 

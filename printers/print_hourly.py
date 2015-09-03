@@ -162,18 +162,17 @@ def new_sunrise_line(hourly_wdb, sun_wdb, COLORS, col_width, head):
     sunset_str = "{}:{}".format(sunset_hour, sunset_min)
     index = 0
     tar_length = col_width * len(hourly_wdb)
+    #  color_func = cf.sunrise_sunset_color
+    color_func = cf.new_sunrise_sunset_color
     while index < tar_length:
         curr_hour = _hour_lis[index // col_width]
         curr_min = (index % col_width) * 10
         if index == sunrise_index:
             temp = "{}{}{}".format(temp,
-                                   cf.sunrise_sunset_color((curr_hour,
-                                                            curr_min),
-                                                           (sunrise_hour,
-                                                            sunrise_min),
-                                                           (sunset_hour,
-                                                            sunset_min),
-                                                           COLORS),
+                                   color_func((curr_hour, curr_min),
+                                              (sunrise_hour, sunrise_min),
+                                              (sunset_hour, sunset_min),
+                                              COLORS),
                                    sunrise_str[0])
             sunrise_str = sunrise_str[1:]
             index += 1
@@ -181,13 +180,10 @@ def new_sunrise_line(hourly_wdb, sun_wdb, COLORS, col_width, head):
                 sunrise_index += 1
         elif index == sunset_index:
             temp = "{}{}{}".format(temp,
-                                   cf.sunrise_sunset_color(
-                                       (curr_hour, curr_min),
-                                       (sunrise_hour,
-                                        sunrise_min),
-                                       (sunset_hour,
-                                        sunset_min),
-                                       COLORS),
+                                   color_func((curr_hour, curr_min),
+                                              (sunrise_hour, sunrise_min),
+                                              (sunset_hour, sunset_min),
+                                              COLORS),
                                    sunset_str[0])
             sunset_str = sunset_str[1:]
             index += 1
@@ -195,12 +191,10 @@ def new_sunrise_line(hourly_wdb, sun_wdb, COLORS, col_width, head):
                 sunset_index += 1
         else:
             temp = "{}{}{}".format(temp,
-                                   cf.sunrise_sunset_color(curr_hour,
-                                                           (sunrise_hour,
-                                                           sunrise_min),
-                                                           (sunset_hour,
-                                                           sunset_min),
-                                                           COLORS),
+                                   color_func((curr_hour, curr_min),
+                                              (sunrise_hour, sunrise_min),
+                                              (sunset_hour, sunset_min),
+                                              COLORS),
                                    " ")
             index += 1
     temp += COLORS.clear

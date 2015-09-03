@@ -111,14 +111,13 @@ def max_len(_lis):
     return max(list(len(x) for x in _lis))
 
 
-def indexer_maker(start, header=0, col_width=6):
+def indexer_maker(start, col_width=6):
     """ returns a function to determine the index of an item.
 
         start:      start time, as a tuple: ("hour", "min")
         target:     item time, as a tuple
         header:     length of header
         col_width:  how wide each item will be in the final string
-    start_hour, start_min = int(start[0]), int(start[1])
     """
     start_hour, start_min = int(start[0]), int(start[1])
 
@@ -156,8 +155,8 @@ def main():
     mins = list("{:0>2}".format(x) for x in range(60))
     import random
     r = random.randint(0, len(hours))
-    #  heads = hours[r:] + hours[:r]
-    heads = hours
+    heads = hours[r:] + hours[:r]
+    #  heads = hours
     lis_len = (width - 8) // col_width
     header = " " * 8
     for tim in heads[:lis_len]:
@@ -166,7 +165,7 @@ def main():
     nerd = []
     for i in range(10):
         nerd.append((random.choice(hours), random.choice(mins)))
-    worker = indexer_maker((heads[0], "00"), header=8, col_width=col_width)
+    worker = indexer_maker((heads[0], "00"), col_width=col_width)
     zerd = []
     for tim in nerd:
         temp = "{}:{}".format(*tim)
