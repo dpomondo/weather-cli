@@ -46,11 +46,12 @@ def hourly_by_bars(hourly_wdb, width, height, sun_wdb, COLORS, sun_func,
     _keys = ["Temp", "Cloud %", "Precip Chance", "Wind speed",
              "Sunrise/set", "Time"]
     head = printers.utilities.max_len(_keys)
-    time_line = printers.utilities.new_time_format_generator(hourly_wdb,
+    time_line = printers.utilities.time_format_generator(hourly_wdb,
                                                              "Time", head,
                                                              col_width)
     # generator spits out a header, lets send it into space:
     _ = next(time_line)
+    del(_)
     for k in _keys:
         res[0].append("{:>{width}}: ".format(k, width=head))
     # for i in range((width - max(list(len(z) for z in res[0])))//6):

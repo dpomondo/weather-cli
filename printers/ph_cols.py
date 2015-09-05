@@ -75,6 +75,7 @@ def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
     """
     # this does not belong here. Need to figure oout how to kill it...
     import printers.utilities as utils
+    import printers.colorfuncs as cf
     # begin main functioning!
     res = []
     _keys = ["Temp", "Cloud %", "Precip Chance", "Wind speed",
@@ -108,10 +109,20 @@ def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
                                   col_width=6, head=head)
     res.append(temp)
     # build the time string
-    temp = "".join(list(utils.new_time_format_generator(hourly_wdb[:ind_slice],
-                                                        "Time", head,
-                                                        col_width=6)))
+    color_func = cf.new_sunrise_sunset_color
+    sunrise = (sun_wdb['sunrise']['hour'], sun_wdb['sunrise']['minute'])
+    sunset = (sun_wdb['sunrise']['hour'], sun_wdb['sunrise']['minute'])
+    temp = "".join(list(utils.time_format_generator(hourly_wdb[:ind_slice],
+                                                    "Time", head,
+                                                    col_width,
+                                                    color_func, COLORS.clear,
+                                                    sunrise, sunset, COLORS)))
+    zemp = "".join(list(utils.time_format_generator(hourly_wdb[:ind_slice],
+                                                    "Time", head,
+                                                    col_width)))
+
     res.append(temp)
+    res.append(zemp)
     #  insert a line before and after? No... let's not
     #  res.insert(0, '-' * (head + col_width * ind_slice))
     #  res.append('-' * (head + col_width * ind_slice))

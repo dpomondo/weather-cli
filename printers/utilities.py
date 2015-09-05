@@ -111,33 +111,27 @@ def max_len(_lis):
     return max(list(len(x) for x in _lis))
 
 
-def new_time_format_generator(hourly_wdb, header, head_width, col_width):
+def time_format_generator(hourly_wdb, header, head_width, col_width,
+                          color_func=lambda x: "", CLEAR="", *args):
     """ generates a sequence of formated times from a list of times
     """
     #  import printers.colorfuncs as cf
     res = []
     res.append("{:>{wid}}: ".format(header, wid=head_width))
     for hour in hourly_wdb:
-        _tim = "{:>{wid}}".format("{}:{}".format(
-            eat_keys(hour, ('FCTTIME', 'hour')),
-            eat_keys(hour, ('FCTTIME', 'min'))), wid=col_width)
-        res.append(_tim)
+        hr = eat_keys(hour, ('FCTTIME', 'hour'))
+        mn = eat_keys(hour, ('FCTTIME', 'min'))
+        _tim = "{:>{wid}}".format("{}:{}".format(hr, mn), wid=col_width)
+        temp = ""
+        for zind in range(col_width):
+            temp_mins = int(60 * (zind / col_width))
+            temp_color = color_func((hr, temp_mins), *args)
+            temp = "{}{}{}{}".format(temp, temp_color, _tim[zind], CLEAR)
+        res.append(temp)
     ind = 0
     while ind < len(res):
         yield res[ind]
         ind += 1
-
-
-def time_format_generator(hourly_wdb, header, head_width, col_width):
-    """ returns a sequence of formated times from a list of times
-    """
-    first = "{:>{wid}}: ".format(header, wid=head_width)
-    temp = ""
-    for hour in hourly_wdb:
-        temp = "{}{:>{wid}}".format(temp, "{}:{}".format(
-            eat_keys(hour, ('FCTTIME', 'hour')),
-            eat_keys(hour, ('FCTTIME', 'min'))), wid=col_width)
-    return first + temp
 
 
 def indexer_maker(start, col_width=6):
