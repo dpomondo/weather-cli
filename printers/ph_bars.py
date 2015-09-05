@@ -12,7 +12,8 @@ def format_bar(color_func, target, curr, COLOR, width):
                                   target, COLOR.clear, wid=width)
 
 
-def format_bar_hour(weat_hour, COLOR, zero_hour, sunrise, sunset, sun_func):
+def format_bar_hour(weat_hour, COLOR, zero_hour, sunrise, sunset, sun_func,
+                    time_func):
     """ return a vertical set of strings, one hour of info
     """
     res = []
@@ -30,8 +31,9 @@ def format_bar_hour(weat_hour, COLOR, zero_hour, sunrise, sunset, sun_func):
                                 sunrise, sunset, COLOR),
         sun_func(weat_hour['FCTTIME']['hour'], sunrise, sunset),
         COLOR.clear))
-    res.append("{:^6}".format("{}:{}".format(weat_hour['FCTTIME']['hour'],
-                                             weat_hour['FCTTIME']['min'])))
+    #  res.append("{:^6}".format("{}:{}".format(weat_hour['FCTTIME']['hour'],
+                                             #  weat_hour['FCTTIME']['min'])))
+    res.append(next(time_func))
     return res
 
 
@@ -43,15 +45,20 @@ def hourly_by_bars(hourly_wdb, width, height, sun_wdb, COLORS, sun_func,
     fins = []
     _keys = ["Temp", "Cloud %", "Precip Chance", "Wind speed",
              "Sunrise/set", "Time"]
+    head = printers.utilities.max_len(_keys)
+    time_line = printers.utilities.new_time_format_generator(hourly_wdb,
+                                                             "Time", head,
+                                                             col_width)
+    # generator spits out a header, lets send it into space:
+    _ = next(time_line)
     for k in _keys:
-        res[0].append("{:>{width}}: ".format(k,
-                      width=max(list(len(z) for z in _keys))))
+        res[0].append("{:>{width}}: ".format(k, width=head))
     # for i in range((width - max(list(len(z) for z in res[0])))//6):
     for i in range((width - len(res[0][0])) // col_width):
         res.append(format_bar_hour(hourly_wdb[i], COLORS, hourly_wdb[0],
                    (sun_wdb['sunrise']['hour'], sun_wdb['sunrise']['minute']),
                    (sun_wdb['sunset']['hour'], sun_wdb['sunset']['minute']),
-                   sun_func))
+                   sun_func, time_line))
     for i in range(len(res[0])):
         fins.append(''.join(z[i] for z in res))
     return fins
