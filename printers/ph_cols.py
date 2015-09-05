@@ -108,12 +108,9 @@ def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
                                   col_width=6, head=head)
     res.append(temp)
     # build the time string
-    temp = "{:>{wid}}: ".format("Time", wid=head)
-    for hour in hourly_wdb[:ind_slice]:
-        temp = "{}{:>{wid}}".format(temp, "{}:{}".format(
-            utils.eat_keys(hour, ('FCTTIME', 'hour')),
-            utils.eat_keys(
-                hour, ('FCTTIME', 'min'))), wid=col_width)
+    temp = "".join(list(utils.new_time_format_generator(hourly_wdb[:ind_slice],
+                                                        "Time", head,
+                                                        col_width=6)))
     res.append(temp)
     #  insert a line before and after? No... let's not
     #  res.insert(0, '-' * (head + col_width * ind_slice))

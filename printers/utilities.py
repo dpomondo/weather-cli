@@ -111,6 +111,35 @@ def max_len(_lis):
     return max(list(len(x) for x in _lis))
 
 
+def new_time_format_generator(hourly_wdb, header, head_width, col_width):
+    """ generates a sequence of formated times from a list of times
+    """
+    #  import printers.colorfuncs as cf
+    res = []
+    res.append("{:>{wid}}: ".format(header, wid=head_width))
+    for hour in hourly_wdb:
+        _tim = "{:>{wid}}".format("{}:{}".format(
+            eat_keys(hour, ('FCTTIME', 'hour')),
+            eat_keys(hour, ('FCTTIME', 'min'))), wid=col_width)
+        res.append(_tim)
+    ind = 0
+    while ind < len(res):
+        yield res[ind]
+        ind += 1
+
+
+def time_format_generator(hourly_wdb, header, head_width, col_width):
+    """ returns a sequence of formated times from a list of times
+    """
+    first = "{:>{wid}}: ".format(header, wid=head_width)
+    temp = ""
+    for hour in hourly_wdb:
+        temp = "{}{:>{wid}}".format(temp, "{}:{}".format(
+            eat_keys(hour, ('FCTTIME', 'hour')),
+            eat_keys(hour, ('FCTTIME', 'min'))), wid=col_width)
+    return first + temp
+
+
 def indexer_maker(start, col_width=6):
     """ returns a function to determine the index of an item.
 
