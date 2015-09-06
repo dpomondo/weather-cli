@@ -22,6 +22,17 @@ def bar_wind_color(target, curr, COLOR):
     return bar_temp_color(target, curr, COLOR)
 
 
+def alternating_background(target, test_func, COLOR):
+    if ((isinstance(target, tuple) or isinstance(target, list)) and
+            len(target)) == 2:
+        hour, minute = int(target[0]), round(int(target[1]))
+    elif isinstance(target, int) or isinstance(target, str):
+        hour, minute = int(target), 0
+    else:
+        raise ValueError("{} passed bad value".format(__name__))
+    return COLOR.grey_background if test_func(hour, minute) else COLOR.clear
+
+
 def new_sunrise_sunset_color(target, sunrise, sunset, COLOR, col_width=6):
     """ Returns a color code depending on distance from sunrise/sunset
     """
@@ -29,15 +40,22 @@ def new_sunrise_sunset_color(target, sunrise, sunset, COLOR, col_width=6):
     if '/usr/self/weather' not in sys.path:
         sys.path.append('/usr/self/weather/')
     import printers.utilities
+    if ((isinstance(target, tuple) or isinstance(target, list)) and
+            len(target)) == 2:
+        hour, minute = int(target[0]), round(int(target[1]))
+    elif isinstance(target, int) or isinstance(target, str):
+        hour, minute = int(target), 0
+    else:
+        raise ValueError("sunrise_sunset_color passed bad value")
     zero_hour = printers.utilities.indexer_maker(('0', '0'))
     rise_ind = zero_hour(sunrise)
     set_ind = zero_hour(sunset)
-    time_ind = zero_hour(target)
+    time_ind = zero_hour((hour, minute))
     set_diff = set_ind - time_ind
     rise_diff = rise_ind - time_ind
     if set_diff <= 0 and set_diff > -2 * col_width:
         return COLOR.dusk
-    elif rise_diff >= 0 and rise_diff < 2 * col_width:
+    elif rise_diff > 0 and rise_diff <= 2 * col_width:
         return COLOR.dawn
     elif rise_diff * set_diff > 0:
         return COLOR.night

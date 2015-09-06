@@ -92,7 +92,8 @@ def get_colors(color_flag=True):
                   'precip25':   "\033[38;5;232m\033[48;5;255m",
                   'precip50':   "\033[38;5;238m\033[48;5;255m",
                   'precip75':   "\033[38;5;250m\033[48;5;232m",
-                  'precip100':  "\033[38;5;255m\033[48;5;232m"
+                  'precip100':  "\033[38;5;255m\033[48;5;232m",
+                  'grey_background': "\033[38;5;233m\033[48;5;251m"
                   }
 
     for key in color_info.keys():
@@ -118,6 +119,7 @@ def time_format_generator(hourly_wdb, header, head_width, col_width,
     #  import printers.colorfuncs as cf
     res = []
     res.append("{:>{wid}}: ".format(header, wid=head_width))
+    #  color_func = cf.new_sunrise_sunset_color
     for hour in hourly_wdb:
         hr = eat_keys(hour, ('FCTTIME', 'hour'))
         mn = eat_keys(hour, ('FCTTIME', 'min'))
@@ -125,6 +127,7 @@ def time_format_generator(hourly_wdb, header, head_width, col_width,
         temp = ""
         for zind in range(col_width):
             temp_mins = int(60 * (zind / col_width))
+            #  temp_color = color_func((hr, temp_mins), *args)
             temp_color = color_func((hr, temp_mins), *args)
             temp = "{}{}{}{}".format(temp, temp_color, _tim[zind], CLEAR)
         res.append(temp)
@@ -144,13 +147,16 @@ def indexer_maker(start, col_width=6):
     """
     start_hour, start_min = int(start[0]), int(start[1])
 
-    def index(hour, min, col_width):
-        return hour * col_width + int(min // (60 / col_width))
+    def index(hour, minute, col_width):
+        return hour * col_width + int(minute // (60 / col_width))
 
     def maker(target):
         """ input: tuple (or list) -> ("hour", "min")
         """
-        target_hour, target_min = int(target[0]), int(target[1])
+        if len(target) > 1:
+            target_hour, target_min = int(target[0]), int(target[1])
+        else:
+            target_hour, target_min = int(target), 0
         start_ind = index(start_hour, start_min, col_width)
         target_ind = index(target_hour, target_min, col_width)
         res = target_ind - start_ind

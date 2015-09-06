@@ -82,13 +82,6 @@ def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
              "Sunrise/set", "Time"]
     head = max(list(len(z) for z in _keys))
     ind_slice = (width - head - 2) // col_width
-    # # build the time string -- top
-    #  temp = "{:>{wid}}: ".format("Time", wid=head)
-    #  for hour in hourly_wdb[:ind_slice]:
-        #  temp = "{}{:^{wid}}".format(temp, "{}:{}".format(
-            #  utilities.eat_keys(hour, ('FCTTIME', 'hour')),
-            #  utilities.eat_keys(hour, ('FCTTIME', 'min'))), wid=col_width)
-    #  res.append(temp)
     # build the basic info strings
     for r in [("Temp", ('temp', 'english'), cf.bar_temp_color, 11),
               ("Cloud %", ('sky', ), cf.bar_cloud_color, 1),
@@ -101,22 +94,34 @@ def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
         for lin in range(len(temp)):
             res.append("{}{}".format("{:>{wid}}{}".format(r[0], ": ", wid=head)
                        if lin == star_ind else " " * (head + 2), temp[lin]))
-    # bnuild the sunrise/sunset string
+    # build the sunrise/sunset string
     temp = utils.sunrise_line(hourly_wdb[:ind_slice], sun_wdb, COLORS,
                               col_width=6, head=head)
     res.append(temp)
+    # build the alternate sunrise/sunset string
     temp = utils.new_sunrise_line(hourly_wdb[:ind_slice], sun_wdb, COLORS,
                                   col_width=6, head=head)
     res.append(temp)
     # build the time string
-    color_func = cf.new_sunrise_sunset_color
-    sunrise = (sun_wdb['sunrise']['hour'], sun_wdb['sunrise']['minute'])
-    sunset = (sun_wdb['sunrise']['hour'], sun_wdb['sunrise']['minute'])
+    # TEST 1
+    #  sunrise = (sun_wdb['sunrise']['hour'], sun_wdb['sunrise']['minute'])
+    #  sunset = (sun_wdb['sunrise']['hour'], sun_wdb['sunrise']['minute'])
+    #  color_func = cf.sunrise_sunset_color
+    #  color_func_vars = [sunrise, sunset, COLORS]
+    #  TEST 2
+    #  color_func = cf.new_sunrise_sunset_color
+    #  color_func_vars = [sunrise, sunset, COLORS]
+    #  TEST 3
+    color_func = cf.alternating_background
+    color_func_vars = [lambda x, y: x % 2 == 1, COLORS]
+    #  TEST 3 1/2
+    #  color_func_vars = [lambda x, y: x < 10, COLORS]
     temp = "".join(list(utils.time_format_generator(hourly_wdb[:ind_slice],
                                                     "Time", head,
                                                     col_width,
                                                     color_func, COLORS.clear,
-                                                    sunrise, sunset, COLORS)))
+                                                    *color_func_vars)))
+    # build the alternate time string
     zemp = "".join(list(utils.time_format_generator(hourly_wdb[:ind_slice],
                                                     "Time", head,
                                                     col_width)))
