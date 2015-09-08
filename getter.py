@@ -230,6 +230,7 @@ def main():
     weather_db_name = config.loaders.day_file_name()
 
     args = parse_arguments()
+    configs = config.loaders.parse_config()
     loop_flag = True
     while loop_flag is True:
         try:
@@ -270,7 +271,7 @@ def main():
                     import printers.print_hourly
                     res = printers.print_hourly.print_hourly(
                         current['hourly_forecast'], current['sun_phase'],
-                        frmt='cols')
+                        configs)
                     for lin in res:
                         print(lin)
                     loop_flag = False

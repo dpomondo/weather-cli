@@ -32,6 +32,16 @@ def config_file_name():
     return os.path.join(home_dir, 'config', 'jwunderground.json')
 
 
+def parse_config():
+    class configurator:
+        pass
+    res = configurator()
+    config_list = {"print_hourly": "cols"}
+    for key in config_list:
+        setattr(res, key, config_list[key])
+    return res
+
+
 def key_formatter(dic):
     key_color = '\033[38;5;214m'
     val_color = '\033[38;5;056m'
