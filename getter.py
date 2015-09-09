@@ -100,6 +100,10 @@ def parse_arguments():
                         action='store_true',
                         help='print out current server response'
                         )
+    parser.add_argument('--files',
+                        action='store_true',
+                        help='list database files in data directory'
+                        )
     return parser.parse_args()
 
 

@@ -9,6 +9,7 @@ import json
 import os
 import time
 home_dir = '/usr/self/weather'
+data_dir = 'weather_data'
 
 
 def load_vars(config_file):
@@ -19,7 +20,7 @@ def load_vars(config_file):
 
 def day_file_name():
     temp = os.path.join(home_dir,
-                        'weather_data',
+                        data_dir,
                         (time.strftime("%d%b%y") + "_weather"))
     return temp
 

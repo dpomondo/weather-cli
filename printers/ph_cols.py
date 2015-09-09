@@ -74,8 +74,8 @@ def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
         exactly backwards...
     """
     # this does not belong here. Need to figure oout how to kill it...
-    import printers.utilities as utils
-    import printers.colorfuncs as cf
+    #  import printers.utilities as utils
+    #  import printers.colorfuncs as cf
     # begin main functioning!
     res = []
     _keys = ["Temp", "Cloud %", "Precip Chance", "Wind speed",
@@ -95,9 +95,6 @@ def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
             res.append("{}{}".format("{:>{wid}}{}".format(r[0], ": ", wid=head)
                        if lin == star_ind else " " * (head + 2), temp[lin]))
     # build the sunrise/sunset string
-    temp = utils.sunrise_line(hourly_wdb[:ind_slice], sun_wdb, COLORS,
-                              col_width=6, head=head)
-    res.append(temp)
     # build the alternate sunrise/sunset string
     temp = utils.new_sunrise_line(hourly_wdb[:ind_slice], sun_wdb, COLORS,
                                   col_width=6, head=head)
@@ -122,12 +119,7 @@ def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
                                                     color_func, COLORS.clear,
                                                     *color_func_vars)))
     # build the alternate time string
-    zemp = "".join(list(utils.time_format_generator(hourly_wdb[:ind_slice],
-                                                    "Time", head,
-                                                    col_width)))
-
     res.append(temp)
-    res.append(zemp)
     #  insert a line before and after? No... let's not
     #  res.insert(0, '-' * (head + col_width * ind_slice))
     #  res.append('-' * (head + col_width * ind_slice))
