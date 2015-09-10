@@ -13,10 +13,13 @@ if home_dir not in sys.path:
 import config.loaders
 
 
-def list_dir():
+def list_dir(verbose=True):
     data_dir = config.loaders.data_dir
+    if verbose:
+        print("Data dir is: " + data_dir)
     files = os.listdir(data_dir)
-    res = list(fil for fil in files if not fil.endswith('.json'))
+    res = list(os.path.abspath(os.path.join(os.getcwd(), data_dir, fil)) for
+               fil in files if not fil.endswith('.json'))
     return res
 
 
@@ -30,6 +33,7 @@ def main():
     fils = list_dir()
     for f in fils:
         try:
+            #  print(f)
             z = get_keys(f)
         except:
             z = []
