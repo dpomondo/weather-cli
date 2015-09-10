@@ -196,7 +196,7 @@ def print_bookkeeping(args, current_ob, weat_db):
     #           3. response_age()
     if args.times or args.keys:
         import updater
-        keys = updater.list_keys(weat_db)
+        keys = updater.list_keys(weat_db, verbose=True)
         # from .updater import list_keys
         # keys = list_keys(weat_db)
     if args.times:

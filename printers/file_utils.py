@@ -20,10 +20,20 @@ def list_dir():
     return res
 
 
+def get_keys(weat_db):
+    import updater
+    keys = updater.list_keys(weat_db, verbose=False)
+    return keys
+
+
 def main():
     fils = list_dir()
     for f in fils:
-        print(f)
+        try:
+            z = get_keys(f)
+        except:
+            z = []
+        print("{}:\t{}".format(f, len(z)))
 
 
 if __name__ == '__main__':
