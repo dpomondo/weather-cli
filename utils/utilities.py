@@ -116,24 +116,21 @@ def time_format_generator(hourly_wdb, header, head_width, col_width,
                           color_func=lambda x: "", CLEAR="", *args):
     """ generates a sequence of formated times from a list of times
     """
-    #  import printers.colorfuncs as cf
-    res = []
-    res.append("{:>{wid}}: ".format(header, wid=head_width))
-    #  color_func = cf.new_sunrise_sunset_color
-    for hour in hourly_wdb:
-        hr = eat_keys(hour, ('FCTTIME', 'hour'))
-        mn = eat_keys(hour, ('FCTTIME', 'min'))
-        _tim = "{:>{wid}}".format("{}:{}".format(hr, mn), wid=col_width)
-        temp = ""
-        for zind in range(col_width):
-            temp_mins = int(60 * (zind / col_width))
-            #  temp_color = color_func((hr, temp_mins), *args)
-            temp_color = color_func((hr, temp_mins), *args)
-            temp = "{}{}{}{}".format(temp, temp_color, _tim[zind], CLEAR)
-        res.append(temp)
-    ind = 0
-    while ind < len(res):
-        yield res[ind]
+    ind = -1
+    while ind < len(hourly_wdb):
+        if ind < 0:
+            temp = "{:>{wid}}: ".format(header, wid=head_width)
+        else:
+            hr = eat_keys(hourly_wdb[ind], ('FCTTIME', 'hour'))
+            mn = eat_keys(hourly_wdb[ind], ('FCTTIME', 'min'))
+            _tim = "{:>{wid}}".format("{}:{}".format(hr, mn), wid=col_width)
+            temp = ""
+            for zind in range(col_width):
+                temp_mins = int(60 * (zind / col_width))
+                #  temp_color = color_func((hr, temp_mins), *args)
+                temp_color = color_func((hr, temp_mins), *args)
+                temp = "{}{}{}{}".format(temp, temp_color, _tim[zind], CLEAR)
+        yield temp
         ind += 1
 
 
@@ -186,12 +183,9 @@ def sunrise_sunset_time(hour, sunrise, sunset):
 
 def new_sunrise_line(hourly_wdb, sun_wdb, COLORS, col_width, head):
     # kill the following...
-    #  import utils.utilities
     import printers.colorfuncs as cf
     _hour_lis = list(eat_keys(hour, ('FCTTIME', 'hour')) for hour in
                      hourly_wdb)
-    #  _min_lis = list(eat_keys(hour, ('FCTTIME', 'min')) for hour in
-                    #  hourly_wdb)
     temp = "{:>{wid}}: ".format("Sunrise/set", wid=head)
     sunrise_hour = sun_wdb['sunrise']['hour']
     sunrise_min = sun_wdb['sunrise']['minute']
