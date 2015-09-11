@@ -83,10 +83,20 @@ def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
     head = max(list(len(z) for z in _keys))
     ind_slice = (width - head - 2) // col_width
     # build the basic info strings
-    for r in [("Temp", ('temp', 'english'), cf.bar_temp_color, 11),
-              ("Cloud %", ('sky', ), cf.bar_cloud_color, 1),
-              ("Precip Chance", ('pop', ), cf.bar_precip_color, 1),
-              ("Wind speed", ('wspd', 'english'), cf.bar_wind_color, 1)]:
+    # NOTE: fix the mix of tuples and lists... 
+    format_table = [["Temp", ('temp', 'english'), cf.bar_temp_color, 11],
+                    ("Cloud %", ('sky', ), cf.bar_cloud_color, 1),
+                    ("Precip Chance", ('pop', ), cf.bar_precip_color, 1),
+                    ("Wind speed", ('wspd', 'english'), cf.bar_wind_color, 1)]
+    # here we make sure we don't return something higher tha=n the screen
+    #   NOTE:
+    #   the magic '3' will disappear once the whole format_table gets built
+    #   according to a formatting function
+    table_height = sum(list(f[3] for f in format_table)) + 3
+    if table_height > height:
+        format_table[0][3] = max(1, format_table[0][3] - (table_height
+                                 - height))
+    for r in format_table:
         _lis = list(utils.eat_keys(
             hour, r[1]) for hour in hourly_wdb)
         temp, star_ind = cols_formatter(_lis[:ind_slice],
