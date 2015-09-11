@@ -13,7 +13,7 @@ import sys
 import math
 if '/usr/self/weather' not in sys.path:
     sys.path.append('/usr/self/weather/')
-import printers.utilities
+import utils.utilities
 
 # here we have the `magic` numbers, these will eventually be set in a
 # config file
@@ -252,9 +252,9 @@ def grid_forecast(weat_db):
     # first, initialize all the vars
     color_flag = True   # this will eventually get set in a config file
     num_days = len(weat_db)
-    width = printers.utilities.get_terminal_width()
-    height = printers.utilities.get_terminal_height()
-    COLORS = printers.utilities.get_colors(color_flag=color_flag)
+    width = utils.utilities.get_terminal_width()
+    height = utils.utilities.get_terminal_height()
+    COLORS = utils.utilities.get_colors(color_flag=color_flag)
     max_cols, box_width = get_box_size(len(weat_db), width)
     cols = min(max_cols, width//box_width)
     rows = math.ceil(num_days/cols)
@@ -298,8 +298,8 @@ def grid_forecast(weat_db):
 
 if __name__ == '__main__':
     print("Begining test:")
-    wids = printers.utilities.get_terminal_height()
-    hits = printers.utilities.get_terminal_width()
+    wids = utils.utilities.get_terminal_height()
+    hits = utils.utilities.get_terminal_width()
     print("Screen width: {}\nScreen height :{}".format(wids, hits))
     print("-" * 80)
     print("Testing get_box_size function (this WILL end in an exception):")

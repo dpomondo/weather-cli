@@ -1,7 +1,7 @@
 import sys
 if '/usr/self/weather' not in sys.path:
     sys.path.append('/usr/self/weather/')
-import printers.utilities
+import utils.utilities
 import printers.colorfuncs as cf
 
 
@@ -21,8 +21,8 @@ def format_bar_hour(weat_hour, COLOR, zero_hour, sunrise, sunset, sun_func,
               (('sky', ), cf.bar_cloud_color),
               (('pop', ), cf.bar_precip_color),
               (('wspd', 'english'), cf.bar_wind_color)]:
-        target = printers.utilities.eat_keys(weat_hour, r[0])
-        currs = printers.utilities.eat_keys(zero_hour, r[0])
+        target = utils.utilities.eat_keys(weat_hour, r[0])
+        currs = utils.utilities.eat_keys(zero_hour, r[0])
         res.append(format_bar(r[1], int(target), int(currs), COLOR, width=6))
     # TODO: if sunrise_sunset_color can get wrangled into the standard
     # color_func api, we can move this to a format_bar call:
@@ -45,8 +45,8 @@ def hourly_by_bars(hourly_wdb, width, height, sun_wdb, COLORS, sun_func,
     fins = []
     _keys = ["Temp", "Cloud %", "Precip Chance", "Wind speed",
              "Sunrise/set", "Time"]
-    head = printers.utilities.max_len(_keys)
-    time_line = printers.utilities.time_format_generator(hourly_wdb,
+    head = utils.utilities.max_len(_keys)
+    time_line = utils.utilities.time_format_generator(hourly_wdb,
                                                              "Time", head,
                                                              col_width)
     # generator spits out a header, lets send it into space:

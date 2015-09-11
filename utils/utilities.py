@@ -186,14 +186,12 @@ def sunrise_sunset_time(hour, sunrise, sunset):
 
 def new_sunrise_line(hourly_wdb, sun_wdb, COLORS, col_width, head):
     # kill the following...
-    import printers.utilities
+    #  import utils.utilities
     import printers.colorfuncs as cf
-    _hour_lis = list(printers.utilities.eat_keys(
-                     hour, ('FCTTIME', 'hour')) for hour in
+    _hour_lis = list(eat_keys(hour, ('FCTTIME', 'hour')) for hour in
                      hourly_wdb)
-    _min_lis = list(printers.utilities.eat_keys(
-                    hour, ('FCTTIME', 'min')) for hour in
-                    hourly_wdb)
+    #  _min_lis = list(eat_keys(hour, ('FCTTIME', 'min')) for hour in
+                    #  hourly_wdb)
     temp = "{:>{wid}}: ".format("Sunrise/set", wid=head)
     sunrise_hour = sun_wdb['sunrise']['hour']
     sunrise_min = sun_wdb['sunrise']['minute']

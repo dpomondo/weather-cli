@@ -20,7 +20,7 @@ def list_dir(verbose=True):
     files = os.listdir(data_dir)
     res = list(os.path.abspath(os.path.join(os.getcwd(), data_dir, fil)) for
                fil in files if not fil.endswith('.json'))
-    return res
+    return sorted(res, key=lambda fil: os.stat(fil).st_mtime)
 
 
 def get_keys(weat_db):

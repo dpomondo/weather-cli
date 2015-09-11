@@ -16,10 +16,10 @@ if '/usr/self/weather' not in sys.path:
 
 
 def print_hourly(hourly_wdb, sun_wdb, configs):
-    import printers.utilities
-    width = printers.utilities.get_terminal_width()
-    height = printers.utilities.get_terminal_height()
-    COLORS = printers.utilities.get_colors(color_flag=True)
+    import utils.utilities
+    width = utils.utilities.get_terminal_width()
+    height = utils.utilities.get_terminal_height()
+    COLORS = utils.utilities.get_colors(color_flag=True)
     if configs.print_hourly == 'lines':
         import printers.ph_lines
         res = printers.ph_lines.hourly_by_lines(hourly_wdb, width, height)
@@ -28,7 +28,7 @@ def print_hourly(hourly_wdb, sun_wdb, configs):
         res = printers.ph_bars.hourly_by_bars(
             hourly_wdb, width, height,
             sun_wdb, COLORS,
-            printers.utilities.sunrise_sunset_time)
+            utils.utilities.sunrise_sunset_time)
     elif configs.print_hourly == 'cols':
         import printers.ph_cols
         res = printers.ph_cols.hourly_by_cols(hourly_wdb, width, height,
@@ -61,8 +61,8 @@ def main():
         print(lin)
     print("Testing cols...")
     temp_config.print_hourly = 'cols'
-    # COLORS = printers.utilities.get_colors(color_flag=True)
-    # width = printers.utilities.get_terminal_width()
+    # COLORS = utils.utilities.get_colors(color_flag=True)
+    # width = utils.utilities.get_terminal_width()
     # zing = list(z['temp']['english'] for z in now['hourly_forecast'])
     # nerd = cols_formatter(zing[:width//6], COLORS, bar_temp_color)
     gerd = print_hourly(now['hourly_forecast'], now['sun_phase'], temp_config)

@@ -1,7 +1,7 @@
 import sys
 if '/usr/self/weather' not in sys.path:
     sys.path.append('/usr/self/weather/')
-import printers.utilities as utils
+import utils.utilities as utils
 import printers.colorfuncs as cf
 
 
@@ -74,7 +74,7 @@ def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
         exactly backwards...
     """
     # this does not belong here. Need to figure oout how to kill it...
-    #  import printers.utilities as utils
+    #  import utils.utilities as utils
     #  import printers.colorfuncs as cf
     # begin main functioning!
     res = []
