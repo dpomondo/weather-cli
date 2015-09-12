@@ -2,6 +2,7 @@ import sys
 if '/usr/self/weather' not in sys.path:
     sys.path.append('/usr/self/weather/')
 import utils.utilities as utils
+import printers.phutils as phutils
 import printers.colorfuncs as cf
 
 
@@ -83,7 +84,7 @@ def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
     head = max(list(len(z) for z in _keys))
     ind_slice = (width - head - 2) // col_width
     # build the basic info strings
-    # NOTE: fix the mix of tuples and lists... 
+    # NOTE: fix the mix of tuples and lists...
     format_table = [["Temp", ('temp', 'english'), cf.bar_temp_color, 11],
                     ("Cloud %", ('sky', ), cf.bar_cloud_color, 1),
                     ("Precip Chance", ('pop', ), cf.bar_precip_color, 1),
@@ -106,8 +107,8 @@ def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
                        if lin == star_ind else " " * (head + 2), temp[lin]))
     # build the sunrise/sunset string
     # build the alternate sunrise/sunset string
-    temp = utils.new_sunrise_line(hourly_wdb[:ind_slice], sun_wdb, COLORS,
-                                  col_width=6, head=head)
+    temp = phutils.new_sunrise_line(hourly_wdb[:ind_slice], sun_wdb, COLORS,
+                                    col_width=6, head=head)
     res.append(temp)
     # build the time string
     # TEST 1
@@ -123,11 +124,11 @@ def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
     color_func_vars = [lambda x, y: x % 2 == 1, COLORS]
     #  TEST 3 1/2
     #  color_func_vars = [lambda x, y: x < 10, COLORS]
-    temp = "".join(list(utils.time_format_generator(hourly_wdb[:ind_slice],
-                                                    "Time", head,
-                                                    col_width,
-                                                    color_func, COLORS.clear,
-                                                    *color_func_vars)))
+    temp = "".join(list(phutils.time_format_generator(hourly_wdb[:ind_slice],
+                                                      "Time", head,
+                                                      col_width,
+                                                      color_func, COLORS.clear,
+                                                      *color_func_vars)))
     # build the alternate time string
     res.append(temp)
     #  insert a line before and after? No... let's not

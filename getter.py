@@ -258,6 +258,8 @@ def main():
                     for r in res:
                         print(r)
                     loop_flag = False
+                elif args.files:
+                    raise NotImplementedError
                 elif args.moon:
                     import printers.moon
                     printers.moon.print_moon(current['moon_phase'])

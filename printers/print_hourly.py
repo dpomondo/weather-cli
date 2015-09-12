@@ -24,18 +24,21 @@ def print_hourly(hourly_wdb, sun_wdb, configs):
         import printers.ph_lines
         res = printers.ph_lines.hourly_by_lines(hourly_wdb, width, height)
     elif configs.print_hourly == 'bars':
+        import printers.phutils as phutils
         import printers.ph_bars
         res = printers.ph_bars.hourly_by_bars(
             hourly_wdb, width, height,
             sun_wdb, COLORS,
-            utils.utilities.sunrise_sunset_time)
+            phutils.sunrise_sunset_time)
     elif configs.print_hourly == 'cols':
-        import printers.ph_cols
-        res = printers.ph_cols.hourly_by_cols(hourly_wdb, width, height,
-                                              sun_wdb, COLORS,
-                                              col_width=6)
+        import printers.ph_cols as ph_cols
+        res = ph_cols.hourly_by_cols(hourly_wdb, width, height,
+                                     sun_wdb, COLORS,
+                                     col_width=6)
     else:
-        raise KeyError("print_hourly.print_hourly(...) passed bad format var")
+        message = "print_hourly function passed bad format var: {}".format(
+            configs.print_hourly)
+        raise KeyError(message)
         #  res = printers.ph_lines.hourly_by_lines(hourly_wdb, width, height)
     return res
 

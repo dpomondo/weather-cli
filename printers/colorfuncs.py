@@ -39,6 +39,7 @@ def new_sunrise_sunset_color(target, sunrise, sunset, COLOR, col_width=6):
     import sys
     if '/usr/self/weather' not in sys.path:
         sys.path.append('/usr/self/weather/')
+    import printers.phutils as phutils
     import utils.utilities
     if ((isinstance(target, tuple) or isinstance(target, list)) and
             len(target)) == 2:
@@ -47,7 +48,7 @@ def new_sunrise_sunset_color(target, sunrise, sunset, COLOR, col_width=6):
         hour, minute = int(target), 0
     else:
         raise ValueError("sunrise_sunset_color passed bad value")
-    zero_hour = utils.utilities.indexer_maker(('0', '0'))
+    zero_hour = phutils.indexer_maker(('0', '0'))
     rise_ind = zero_hour(sunrise)
     set_ind = zero_hour(sunset)
     time_ind = zero_hour((hour, minute))

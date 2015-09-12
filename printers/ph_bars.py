@@ -46,7 +46,7 @@ def hourly_by_bars(hourly_wdb, width, height, sun_wdb, COLORS, sun_func,
     _keys = ["Temp", "Cloud %", "Precip Chance", "Wind speed",
              "Sunrise/set", "Time"]
     head = utils.utilities.max_len(_keys)
-    time_line = utils.utilities.time_format_generator(hourly_wdb,
+    time_line = phutils.utilities.time_format_generator(hourly_wdb,
                                                              "Time", head,
                                                              col_width)
     # generator spits out a header, lets send it into space:
