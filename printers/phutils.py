@@ -152,4 +152,39 @@ def sunrise_line(hourly_wdb, sun_wdb, COLORS, col_width, head):
     return temp
 
 
+def main():
+    import sys
+    home_dir = '/usr/self/weather'
+    if home_dir not in sys.path:
+        sys.path.append(home_dir)
+    import utils.utilities
+    import random
+    # test indexer_maker
+    print("Testing indexer_maker func:")
+    col_width = 6
+    width = utils.utilities.get_terminal_width()
+    hours = list(str(x) for x in range(24))
+    mins = list("{:0>2}".format(x) for x in range(60))
+    r = random.randint(0, len(hours))
+    heads = hours[r:] + hours[:r]
+    #  heads = hours
+    lis_len = (width - 8) // col_width
+    header = " " * 8
+    for tim in heads[:lis_len]:
+        header = "{}{:-<{wid}}".format(header, "{}:{}".format(tim, "00"),
+                                       wid=col_width)
+    nerd = []
+    for i in range(10):
+        nerd.append((random.choice(hours), random.choice(mins)))
+    worker = indexer_maker((heads[0], "00"), col_width=col_width)
+    zerd = []
+    for tim in nerd:
+        temp = "{}:{}".format(*tim)
+        zerd.append("{:<8}{}{}".format(temp, "." * worker(tim), temp))
+    print(header)
+    for lin in zerd:
+        print(lin[:width])
 
+
+if __name__ == '__main__':
+    main()

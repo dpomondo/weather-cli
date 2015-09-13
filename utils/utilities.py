@@ -47,6 +47,14 @@ def eat_keys(_lis, _key_tup):
     return tar
 
 
+def new_eat_keys(_lis, _keys):
+    from functools import reduce
+    temp = []
+    temp.append(_lis)
+    temp += _keys
+    return reduce(lambda x, y: x[y], temp)
+
+
 def get_colors(color_flag=True):
     """ Return object with color information.
     """
@@ -123,30 +131,72 @@ def main():
     if height:
         print("{}: {}".format("height", height))
 
-    # test indexer_maker
-    col_width = 6
-    hours = list(str(x) for x in range(24))
-    mins = list("{:0>2}".format(x) for x in range(60))
+    # test eat_keys
+    def key_adder(_dic, iters, max_iters):
+        def word_maker():
+            temp = ""
+            for i in range(3):
+                temp += random.choice(woodpile)
+            return temp
+        # begin key_adder func proper...
+        #  curr_its = iters
+        nums = random.randint(2, 5)
+        for i in range(nums):
+            temp = word_maker()
+            if iters >= max_iters or (iters > 1 and random.random() < 0.2):
+                _dic[temp] = word_maker()
+            else:
+                new_dic = {}
+                key_adder(new_dic, iters + 1, max_iters)
+                _dic[temp] = new_dic
+        return
+
+    def target_maker(_dic):
+        target = []
+        zemp = verklemp
+        while isinstance(zemp, dict):
+            rands = random.choice(list(zemp.keys()))
+            target.append(rands)
+            zemp = zemp[rands]
+        return target
+
+    def sum_dic(_dic):
+        total = 0
+        for key in _dic:
+            if isinstance(_dic[key], dict):
+                total += sum_dic(_dic[key])
+            else:
+                total += 1
+        return total
+
     import random
-    r = random.randint(0, len(hours))
-    heads = hours[r:] + hours[:r]
-    #  heads = hours
-    lis_len = (width - 8) // col_width
-    header = " " * 8
-    for tim in heads[:lis_len]:
-        header = "{}{:-<{wid}}".format(header, "{}:{}".format(tim, "00"),
-                                       wid=col_width)
-    nerd = []
-    for i in range(10):
-        nerd.append((random.choice(hours), random.choice(mins)))
-    worker = indexer_maker((heads[0], "00"), col_width=col_width)
-    zerd = []
-    for tim in nerd:
-        temp = "{}:{}".format(*tim)
-        zerd.append("{:<8}{}{}".format(temp, "." * worker(tim), temp))
-    print(header)
-    for lin in zerd:
-        print(lin[:width])
+    import string
+    import sys
+    home_dir = '/usr/self/weather'
+    if home_dir not in sys.path:
+        sys.path.append(home_dir)
+    import config.loaders
+    woodpile = list(string.ascii_letters)
+    verklemp = {}
+
+    key_adder(verklemp, 0, 4)
+    print("Testing eat_keys function...")
+    print("Eating the keys in the following:")
+    #  res = config.loaders.key_formatter(verklemp)
+    #  for lin in res:
+        #  print(lin)
+    print("Test dictionary contains {} items...".format(sum_dic(verklemp)))
+    for i in range(3):
+        target = target_maker(verklemp)
+        print("Testing the following sequence: {}".format(str(target)))
+        basket = verklemp
+        for t in target:
+            basket = basket[t]
+        ball = eat_keys(verklemp, target)
+        potato = new_eat_keys(verklemp, target)
+        print("{:<20}: {}".format("Iterating over keys", basket))
+        print("{:<20}: {}".format("Function call", ball))
+        print("{:<20}: {}".format("Reduce + lambda", potato))
 
 
 if __name__ == "__main__":
