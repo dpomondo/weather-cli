@@ -48,6 +48,8 @@ def eat_keys(_lis, _key_tup):
 
 
 def new_eat_keys(_lis, _keys):
+    """ helper func. NOTE: this is 10-15 times slower than oldstyle eat_keys
+    """
     from functools import reduce
     temp = []
     temp.append(_lis)
@@ -120,7 +122,7 @@ def max_len(_lis):
     return max(list(len(x) for x in _lis))
 
 
-def main():
+def main(verbose, dic_depth=5):
     # test width func
     width = get_terminal_width()
     if width:
@@ -133,18 +135,19 @@ def main():
 
     # test eat_keys
     def key_adder(_dic, iters, max_iters):
+        """ makes a dictionary with random keys/items
+        """
         def word_maker():
             temp = ""
             for i in range(3):
                 temp += random.choice(woodpile)
             return temp
         # begin key_adder func proper...
-        #  curr_its = iters
         nums = random.randint(2, 5)
         for i in range(nums):
             temp = word_maker()
             if iters >= max_iters or (iters > 1 and random.random() < 0.2):
-                _dic[temp] = word_maker()
+                _dic[temp] = word_maker() + word_maker()
             else:
                 new_dic = {}
                 key_adder(new_dic, iters + 1, max_iters)
@@ -152,8 +155,10 @@ def main():
         return
 
     def target_maker(_dic):
+        """ returns a random list of dic keys, leading to an item
+        """
         target = []
-        zemp = verklemp
+        zemp = _dic
         while isinstance(zemp, dict):
             rands = random.choice(list(zemp.keys()))
             target.append(rands)
@@ -161,6 +166,8 @@ def main():
         return target
 
     def sum_dic(_dic):
+        """ returns number of items in a dictionary
+        """
         total = 0
         for key in _dic:
             if isinstance(_dic[key], dict):
@@ -171,33 +178,68 @@ def main():
 
     import random
     import string
-    import sys
-    home_dir = '/usr/self/weather'
-    if home_dir not in sys.path:
-        sys.path.append(home_dir)
-    import config.loaders
     woodpile = list(string.ascii_letters)
     verklemp = {}
 
-    key_adder(verklemp, 0, 4)
+    key_adder(verklemp, 0, dic_depth)
     print("Testing eat_keys function...")
-    print("Eating the keys in the following:")
-    #  res = config.loaders.key_formatter(verklemp)
-    #  for lin in res:
-        #  print(lin)
+    if verbose:
+        import sys
+        home_dir = '/usr/self/weather'
+        if home_dir not in sys.path:
+            sys.path.append(home_dir)
+        import config.loaders
+        res = config.loaders.key_formatter(verklemp)
+        print("Eating the keys in the following:")
+        for lin in res:
+            print(lin)
     print("Test dictionary contains {} items...".format(sum_dic(verklemp)))
+    from collections import defaultdict
+    totals = defaultdict(list)
+    reps = 100000
+    import time
     for i in range(3):
         target = target_maker(verklemp)
-        print("Testing the following sequence: {}".format(str(target)))
-        basket = verklemp
-        for t in target:
-            basket = basket[t]
-        ball = eat_keys(verklemp, target)
-        potato = new_eat_keys(verklemp, target)
-        print("{:<20}: {}".format("Iterating over keys", basket))
-        print("{:<20}: {}".format("Function call", ball))
-        print("{:<20}: {}".format("Reduce + lambda", potato))
+        print("{} reps over the following sequence: {}".format(reps,
+                                                               str(target)))
+        # first
+        start = time.time()
+        for i in range(reps):
+            basket = verklemp
+            for t in target:
+                basket = basket[t]
+        totals['first'].append(time.time() - start)
+        # second
+        start = time.time()
+        for i in range(reps):
+            ball = eat_keys(verklemp, target)
+        totals['second'].append(time.time() - start)
+        # third
+        start = time.time()
+        for i in range(reps):
+            potato = new_eat_keys(verklemp, target)
+        totals['third'].append(time.time() - start)
+        print("{:<20}: {} {}".format("Iterating over keys", basket,
+                                     str(sum(list(totals['first'])))))
+        print("{:<20}: {} {}".format("Function call", ball,
+                                     str(sum(list(totals['second'])))))
+        print("{:<20}: {} {}".format("Reduce + lambda", potato,
+                                     str(sum(list(totals['third'])))))
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    verbose = False
+    #  dic_depth = 4
+    if len(sys.argv) > 1:
+        if '--verbose' in sys.argv:
+            verbose = True
+        for arg in sys.argv[1:]:
+            z = None
+            try:
+                z = int(arg)
+            except:
+                pass
+            if isinstance(z, int):
+                dic_depth = z if z <= 10 else 4
+    main(verbose, dic_depth)
