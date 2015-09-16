@@ -34,14 +34,16 @@ def get_keys(weat_db):
 
 def main():
     fils = list_dir()
+    total = 0
     for f in fils:
         try:
             #  print(f)
             z = get_keys(f)
+            total += len(z)
         except:
             z = []
         print("{}:\t{}".format(f, len(z)))
-
+    print("{} total files with {} total keys".format(len(fils), total))
 
 if __name__ == '__main__':
     main()

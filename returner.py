@@ -10,7 +10,6 @@ home_dir = '/usr/self/weather/'
 if home_dir not in sys.path:
     sys.path.append(home_dir)
 import config.loaders
-# change allo these to function calls:
 
 
 def call_getter():

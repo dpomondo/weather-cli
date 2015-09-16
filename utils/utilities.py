@@ -47,6 +47,18 @@ def eat_keys(_lis, _key_tup):
     return tar
 
 
+def new_new_eat_keys():
+    """ helper func. NOTE: this is 10-15 times slower than oldstyle eat_keys
+    """
+    from functools import reduce
+    def eater(_lis, _keys):
+        temp = []
+        temp.append(_lis)
+        temp += _keys
+        return reduce(lambda x, y: x[y], temp)
+    return eater
+
+
 def new_eat_keys(_lis, _keys):
     """ helper func. NOTE: this is 10-15 times slower than oldstyle eat_keys
     """
@@ -198,6 +210,7 @@ def main(verbose, dic_depth=5):
     totals = defaultdict(list)
     reps = 100000
     import time
+    eats = new_new_eat_keys()
     for i in range(3):
         target = target_maker(verklemp)
         print("{} reps over the following sequence: {}".format(reps,
@@ -219,12 +232,19 @@ def main(verbose, dic_depth=5):
         for i in range(reps):
             potato = new_eat_keys(verklemp, target)
         totals['third'].append(time.time() - start)
+        # fourth
+        start = time.time()
+        for i in range(reps):
+            salad = eats(verklemp, target)
+        totals['fourth'].append(time.time() - start)
         print("{:<20}: {} {}".format("Iterating over keys", basket,
                                      str(sum(list(totals['first'])))))
         print("{:<20}: {} {}".format("Function call", ball,
                                      str(sum(list(totals['second'])))))
         print("{:<20}: {} {}".format("Reduce + lambda", potato,
                                      str(sum(list(totals['third'])))))
+        print("{:<20}: {} {}".format("Factory reduce", salad,
+                                     str(sum(list(totals['fourth'])))))
 
 
 if __name__ == "__main__":
