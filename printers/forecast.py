@@ -21,6 +21,9 @@ def print_forecast(weat_db, frmt='lines'):
     elif frmt == 'grid':
         import printers.forecast_grid as fg
         res = fg.grid_forecast(weat_db)
+    elif frmt == 'week':
+        import printers.forecast_week as fw
+        res = fw.week_forecast(weat_db)
     else:
         res = lines_forecast(weat_db)
     return res
