@@ -108,7 +108,7 @@ def hourly_by_cols(hourly_wdb, width, height, sun_wdb, COLORS, col_width=5):
     # build the sunrise/sunset string
     # build the alternate sunrise/sunset string
     temp = phutils.new_sunrise_line(hourly_wdb[:ind_slice], sun_wdb, COLORS,
-                                    col_width=6, head=head)
+                                    col_width=col_width, head=head)
     res.append(temp)
     # build the time string
     # TEST 1

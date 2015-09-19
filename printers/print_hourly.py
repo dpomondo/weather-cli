@@ -31,10 +31,11 @@ def print_hourly(hourly_wdb, sun_wdb, configs):
             sun_wdb, COLORS,
             phutils.sunrise_sunset_time)
     elif configs.print_hourly == 'cols':
+        col_width = 5
         import printers.ph_cols as ph_cols
         res = ph_cols.hourly_by_cols(hourly_wdb, width, height,
                                      sun_wdb, COLORS,
-                                     col_width=6)
+                                     col_width=col_width)
     else:
         message = "print_hourly function passed bad format var: {}".format(
             configs.print_hourly)
