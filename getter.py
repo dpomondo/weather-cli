@@ -97,7 +97,11 @@ def parse_arguments():
                         help='look at local options'
                         )
     parser.add_argument('--debug',
-                        action='store_true',
+                        action='store',
+                        #  default='c',
+                        type=str,
+                        choices=['hour', 'h', 'forecast', 'f', 'current',
+                                 'c'],
                         help='print out current server response'
                         )
     parser.add_argument('--files',
@@ -252,9 +256,23 @@ def main():
                 # only get current response object if we need it
                 import returner
                 current = returner.main()
-                if args.debug:
+                if args.debug in ['current', 'c']:
                     res = config.loaders.key_formatter(
                         current['current_observation'])
+                    for r in res:
+                        print(r)
+                    loop_flag = False
+                elif args.debug in ['hourly', 'h']:
+                    res = config.loaders.key_formatter(
+                        current['hourly_forecast'][0])
+                    for r in res:
+                        print(r)
+                    loop_flag = False
+                elif args.debug in ['forecast', 'f']:
+                    res = config.loaders.key_formatter(
+                        current['forecast']
+                               ['simpleforecast']
+                               ['forecastday'][0])
                     for r in res:
                         print(r)
                     loop_flag = False
