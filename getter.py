@@ -27,6 +27,8 @@
 import sys
 import time
 import argparse
+import logging
+logging.basicConfig(filename='logging.txt', level=logging.DEBUG)
 
 
 def parse_arguments():
@@ -154,6 +156,7 @@ def update(verbose=False, check_time=True):
             return
         try:
             now = updater.get_response(verbose=verbose, **temp)
+            logging.info("Response from server at {}".format(time.time()))
         # except requests.exceptions.ConnectionError as e:
         except Exception as e:
             # print("{} caught in getter.update".format(e))
@@ -315,16 +318,20 @@ def main():
                 loop_flag = False
         except KeyError as e:
             # update(verbose=args.verbose)
-            print("KeyError caught: {}".format(e))
+            message = "KeyError caught: {}".format(e)
+            print(message)
             import traceback
             traceback.print_exception(*sys.exc_info())
             loop_flag = False
+            logging.debug("{} -- {}".format(message, time.time()))
         except Exception as e:
             # tb = sys.exc_info()[2]
-            print("exception caught at top level: {}".format(e))
+            message = "exception caught at top level: {}".format(e)
+            print(message)
             import traceback
             traceback.print_exception(*sys.exc_info())
             loop_flag = False
+            logging.debug("{} -- {}".format(message, time.time()))
 
 
 if __name__ == '__main__':
