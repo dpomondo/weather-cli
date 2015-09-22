@@ -28,7 +28,8 @@ import sys
 import time
 import argparse
 import logging
-logging.basicConfig(filename='logging.txt', level=logging.DEBUG)
+logging.basicConfig(filename='logging.txt', level=logging.DEBUG,
+                    format="%(levelname)s:%(name)s:%(asctime)s -- %(message)s")
 
 
 def parse_arguments():
@@ -110,6 +111,10 @@ def parse_arguments():
                         action='store_true',
                         help='list database files in data directory'
                         )
+    parser.add_argument('--logging',
+                        action='store_true',
+                        help='test the logging configuration'
+                        )
     return parser.parse_args()
 
 
@@ -135,12 +140,13 @@ def update(verbose=False, check_time=True):
     import json
     import shelve
     import updater
+    import logging
+    logging.basicConfig(filename='logging.txt', level=logging.DEBUG,
+        format="%(levelname)s:%(name)s:%(asctime)s -- %(message)s")
     config_file = config.loaders.config_file_name()
     temp = config.loaders.load_vars(config_file=config_file)
     time_out = int(temp.get('time_out', 600))
     db_target = config.loaders.day_file_name()
-    # trying this out, if it fails the try..finally.. logic below should
-    # be uncommented, and lines 136-170 indented
 
     weat_db_file_open_flag = False
     try:
@@ -156,7 +162,7 @@ def update(verbose=False, check_time=True):
             return
         try:
             now = updater.get_response(verbose=verbose, **temp)
-            logging.info("Response from server at {}".format(time.time()))
+            #  logging.info("Response from server at {}".format(time.time()))
         # except requests.exceptions.ConnectionError as e:
         except Exception as e:
             # print("{} caught in getter.update".format(e))
@@ -164,8 +170,9 @@ def update(verbose=False, check_time=True):
             tb = sys.exc_info()[2]
             raise e.with_traceback(tb)
         if now is not None and 'current_observation' in now:
-            import pprint
+            logging.info("Response from server at {}".format(time.time()))
             if verbose:
+                import pprint
                 print('Function returned this:')
                 pprint.pprint(now.keys())
             weat_db_file['current_response'] = now
@@ -178,11 +185,13 @@ def update(verbose=False, check_time=True):
                 nerd[key] = now[key]
             with open(config.loaders.current_file_name(), "w") as outfile:
                 json.dump(nerd, outfile, indent=2)
-            del(nerd)
             if verbose:
                 keys = list(weat_db_file.keys())
                 print("weather_db has the following keys:")
                 pprint.pprint(keys)
+            logging.info("Added observation ({}) to weather database".format(
+                now['current_observation']['observation_epoch']))
+            del(nerd)
     except Exception as e:
         tb = sys.exc_info()[2]
         raise e.with_traceback(tb)
@@ -241,6 +250,8 @@ def main():
     weather_db_name = config.loaders.day_file_name()
 
     args = parse_arguments()
+    logging.debug("Loaded args object. {} attrs in args.__dict__".format(
+        len(args.__dict__)))
     configs = config.loaders.parse_config()
     loop_flag = True
     while loop_flag is True:
@@ -259,7 +270,11 @@ def main():
                 # only get current response object if we need it
                 import returner
                 current = returner.main()
-                if args.debug in ['current', 'c']:
+
+                if args.logging:
+                    logging.info("Sending test message -- all is well!")
+                    loop_flag = False
+                elif args.debug in ['current', 'c']:
                     res = config.loaders.key_formatter(
                         current['current_observation'])
                     for r in res:
@@ -323,7 +338,7 @@ def main():
             import traceback
             traceback.print_exception(*sys.exc_info())
             loop_flag = False
-            logging.debug("{} -- {}".format(message, time.time()))
+            logging.debug(message)
         except Exception as e:
             # tb = sys.exc_info()[2]
             message = "exception caught at top level: {}".format(e)
@@ -331,7 +346,7 @@ def main():
             import traceback
             traceback.print_exception(*sys.exc_info())
             loop_flag = False
-            logging.debug("{} -- {}".format(message, time.time()))
+            logging.debug(message)
 
 
 if __name__ == '__main__':

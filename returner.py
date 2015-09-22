@@ -10,6 +10,9 @@ home_dir = '/usr/self/weather/'
 if home_dir not in sys.path:
     sys.path.append(home_dir)
 import config.loaders
+import logging
+logging.basicConfig(filename='logging.txt', level=logging.DEBUG,
+                    format="%(levelname)s:%(name)s:%(asctime)s -- %(message)s")
 
 
 def call_getter():
