@@ -27,9 +27,11 @@
 import sys
 import time
 import argparse
-import logging
-logging.basicConfig(filename='logging.txt', level=logging.DEBUG,
-                    format="%(levelname)s:%(name)s:%(asctime)s -- %(message)s")
+#  import logging
+#  import config.loaders
+#  log_file = config.loaders.log_file_name()
+#  logging.basicConfig(filename=log_file, level=logging.DEBUG,
+    #  format="%(levelname)s:%(name)s:%(asctime)s -- %(message)s")
 
 
 def parse_arguments():
@@ -141,12 +143,13 @@ def update(verbose=False, check_time=True):
     import shelve
     import updater
     import logging
-    logging.basicConfig(filename='logging.txt', level=logging.DEBUG,
-        format="%(levelname)s:%(name)s:%(asctime)s -- %(message)s")
     config_file = config.loaders.config_file_name()
     temp = config.loaders.load_vars(config_file=config_file)
     time_out = int(temp.get('time_out', 600))
     db_target = config.loaders.day_file_name()
+    log_file = config.loaders.log_file_name()
+    logging.basicConfig(filename=log_file, level=logging.DEBUG,
+        format="%(levelname)s:%(name)s:%(asctime)s -- %(message)s")
 
     weat_db_file_open_flag = False
     try:
@@ -246,8 +249,12 @@ def main():
     if home_dir not in sys.path:
         sys.path.append(home_dir)
     import config.loaders
+    import logging
     config_file = config.loaders.config_file_name()
     weather_db_name = config.loaders.day_file_name()
+    log_file = config.loaders.log_file_name()
+    logging.basicConfig(filename=log_file, level=logging.DEBUG,
+        format="%(levelname)s:%(name)s:%(asctime)s -- %(message)s")
 
     args = parse_arguments()
     logging.debug("Loaded args object. {} attrs in args.__dict__".format(

@@ -10,6 +10,7 @@ import os
 import time
 home_dir = '/usr/self/weather'
 data_dir = 'weather_data'
+log_dir = 'logs'
 
 
 def load_vars(config_file):
@@ -23,6 +24,10 @@ def day_file_name():
                         data_dir,
                         (time.strftime("%d%b%y") + "_weather"))
     return temp
+
+
+def log_file_name():
+    return os.path.join(home_dir, log_dir, (time.strftime("%d%b%y") + "_log"))
 
 
 def current_file_name():
