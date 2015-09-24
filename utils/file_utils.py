@@ -27,9 +27,30 @@ def list_dir(verbose=True):
 
 
 def get_keys(weat_db):
+    """ return a list of keys in a shelve file
+    """
     import updater
     keys = updater.list_keys(weat_db, verbose=False)
     return keys
+
+
+def parse_databse(db_files, key_list, filter_func=lambda x: True):
+    """ returns a dictionary consisting of data parsed from a list of files.
+
+        key_list:   a tuple of strings, suitable for eat_keys func
+    """
+    import utils.utilities as utils
+    res = {}
+    for k in key_list:
+        res[k] = []
+    for fil in db_files:
+        keys = list(filter(lambda x: x != 'current_response',
+                           get_keys(fil)))
+        for ky in keys:
+            if filter_func(fil[ky]) is True:
+                for k in key_list:
+                    res[k].append(utils.eat_keys(fil[ky], k))
+    return res
 
 
 def main():

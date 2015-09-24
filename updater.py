@@ -69,13 +69,13 @@ def get_response(verbose=False, **kwargs):
     return current_response
 
 
-def list_keys(weat_shelve_db, verbose):
+def list_keys(weat_shelve_db, sort_key=lambda x: True, verbose=False):
     import shelve
     if verbose:
         print("opening {}...".format(weat_shelve_db))
     fil = shelve.open(weat_shelve_db)
     res = list(fil.keys())
-    res.sort()
+    res = sorted(res, key=sort_key)
     if verbose:
         print("closing {}...".format(weat_shelve_db))
     fil.close()
