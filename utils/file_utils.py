@@ -34,37 +34,58 @@ def get_keys(weat_db):
     return keys
 
 
-def parse_databse(db_files, key_list, filter_func=lambda x: True):
+def parse_database(db_files, key_list, filter_func=lambda x: True):
     """ returns a dictionary consisting of data parsed from a list of files.
 
         key_list:   a tuple of strings, suitable for eat_keys func
     """
+    import shelve
     import utils.utilities as utils
     res = {}
     for k in key_list:
         res[k] = []
     for fil in db_files:
-        keys = list(filter(lambda x: x != 'current_response',
-                           get_keys(fil)))
+        #  print("Opening {}...".format(fil))
+        tar = shelve.open(fil)
+        keys = list(z for z in list(tar.keys()) if z != 'current_response')
         for ky in keys:
-            if filter_func(fil[ky]) is True:
-                for k in key_list:
-                    res[k].append(utils.eat_keys(fil[ky], k))
+            #  if filter_func(tar[ky]) is True:
+            for k in key_list:
+                res[k].append(utils.eat_keys(tar[ky], k))
+        tar.close()
     return res
 
 
 def main():
+    # test list_dir and get_keys
     fils = list_dir()
     total = 0
     for f in fils:
         try:
+            pass
             #  print(f)
-            z = get_keys(f)
-            total += len(z)
+            #  z = get_keys(f)
+            #  total += len(z)
         except:
             z = []
-        print("{}:\t{}".format(f, len(z)))
-    print("{} total files with {} total keys".format(len(fils), total))
+        #  print("{}:\t{}".format(f, len(z)))
+    #  print("{} total files with {} total keys".format(len(fils), total))
+    # test parse_database
+    import random
+    import pprint
+    import shelve
+    target = random.sample(fils, 4)
+    #  test_db = shelve.open(target)
+    print('-' * 80)
+    print("Testing file '{}'".format(target))
+    target_keys = []
+    target_keys.append(('current_observation', 'temp_f'))
+    target_keys.append(('current_observation', 'wind_gust_mph'))
+    res = parse_database(target, target_keys)
+    for key in res:
+        print('-' * 40 + '\n' + str(key))
+        pprint.pprint(res[key])
+
 
 if __name__ == '__main__':
     main()
