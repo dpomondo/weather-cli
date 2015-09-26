@@ -49,9 +49,9 @@ def parse_database(db_files, key_list, filter_func=lambda x: True):
         tar = shelve.open(fil)
         keys = list(z for z in list(tar.keys()) if z != 'current_response')
         for ky in keys:
-            #  if filter_func(tar[ky]) is True:
-            for k in key_list:
-                res[k].append(utils.eat_keys(tar[ky], k))
+            if filter_func(tar[ky]) is True:
+                for k in key_list:
+                    res[k].append(utils.eat_keys(tar[ky], k))
         tar.close()
     return res
 

@@ -112,53 +112,10 @@ def new_new_forecast_day_format(forecast_day, box_width, today_h, today_l,
     return res
 
 
-def new_forecast_day_format(forecast_day, box_width, COLORS):
-    """ formats one day of a forecast, returned as a list of lines
-    """
-    res = []
-    margin = (box_width - 20) // 2
-    # res.append('{}{}'.format('+', '-' * (box_width - 1)))
-    # TODO: each line requires a call to a formatting func, passed the COLORS,
-    # the label, and the forecast_day keys. Func totals up the length of the
-    # text to determine padding, THEN does the formatting and returns the line.
-    # This will fix the issue where the COLORS info is counted when determining
-    # the length of the text for end padding
-    res.append('{}'.format(' ' * box_width))
-    day = '{}{}, {} {}'.format(' ' * margin, forecast_day['date']['weekday'],
-                               forecast_day['date']['monthname'],
-                               forecast_day['date']['day'])
-    padding = box_width - len(day)
-    res.append('{}{}'.format(day, ' ' * padding))
-    nerd = '{}{:>10}{}{}{}'.format(' ' * margin, 'high: ', COLORS.high,
-                                   forecast_day['high']['fahrenheit'],
-                                   COLORS.clear)
-    padding = box_width - len(nerd)
-    res.append('{}{}'.format(nerd, ' ' * padding))
-    nerd = '{}{:>10}{}{}{}'.format(' ' * margin, 'low: ', COLORS.low,
-                                   forecast_day['low']['fahrenheit'],
-                                   COLORS.clear)
-    padding = box_width - len(nerd)
-    res.append('{}{}'.format(nerd, ' ' * padding))
-    nerd = '{}{:>10}{}{}{}'.format(' ' * margin, 'weather: ', COLORS.cond,
-                                   forecast_day['conditions'][:10],
-                                   COLORS.clear)
-    padding = box_width - len(nerd)
-    res.append('{}{}'.format(nerd, ' ' * padding))
-    res.append(' ' * box_width)
-    nerd = '{}{}{}{}mph {}{}'.format(' ' * margin, 'wind: ', COLORS.wind,
-                                     forecast_day['avewind']['mph'],
-                                     forecast_day['avewind']['dir'],
-                                     COLORS.clear)
-    padding = box_width - len(nerd)
-    res.append('{}{}'.format(nerd, ' ' * padding))
-    res.append(' ' * box_width)
-    return res
-
-
 def add_box_lines(lins, day_num, total_days, cols_nums):
     """ Add grid lines to a list of lines, depending on place in grid.
 
-        lins: list of lines formatted using new_forecast_day_format(...)
+        lins: list of lines formatted using new_new_forecast_day_format(...)
         day_num: place in list of days
         total_days: total number of days getting formatted
         cols_nums: total number of columns in the grid.
@@ -187,33 +144,6 @@ def add_box_lines(lins, day_num, total_days, cols_nums):
     if day_num < cols_nums:
         new_lins.insert(0, new_lins[-1])
     return new_lins
-
-
-def forecast_day_format(forecast_day, lin_row, box_width):
-    """ this function is deprecated and slated for obliteration
-        """
-    lin_row[0] = '{}{}{}'.format(lin_row[0], '+', '-' * (box_width-1))
-    lin_row[1] = '{}{}'.format(lin_row[1], ' ' * box_width)
-    day = '{}, {} {}'.format(forecast_day['date']['weekday'],
-                             forecast_day['date']['monthname'],
-                             forecast_day['date']['day'])
-    padding = box_width - len(day)
-    lin_row[2] = '{}{}{}'.format(lin_row[2], day, ' ' * padding)
-    nerd = '{:>10}{}'.format('high: ', forecast_day['high']['fahrenheit'])
-    padding = box_width - len(nerd)
-    lin_row[3] = '{}{}{}'.format(lin_row[3], nerd, ' ' * padding)
-    nerd = '{:>10}{}'.format(' low: ', forecast_day['low']['fahrenheit'])
-    padding = box_width - len(nerd)
-    lin_row[4] = '{}{}{}'.format(lin_row[4], nerd, ' ' * padding)
-    nerd = '{:>10}{}'.format('weather: ', forecast_day['conditions'][:10])
-    padding = box_width - len(nerd)
-    lin_row[5] = '{}{}{}'.format(lin_row[5], nerd, ' ' * padding)
-    lin_row[6] = ' ' * box_width
-    nerd = '{}{}mph {}'.format('wind: ', forecast_day['avewind']['mph'],
-                               forecast_day['avewind']['dir'])
-    padding = box_width - len(nerd)
-    lin_row[7] = '{}{}{}'.format(lin_row[7], nerd, ' ' * padding)
-    lin_row[8] = ' ' * box_width
 
 
 def grid_forecast(weat_db):
