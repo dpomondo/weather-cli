@@ -18,3 +18,24 @@ def week_forecast(weat_db):
     width = utils.get_terminal_width()
     height = utils.get_terminal_height()
     num_days = len(weat_db)
+
+
+def format_single_day(day, formatter):
+    pass
+
+
+def format_weeks(lis, box_width, box_height, formatter):
+    """ takes a list of formatted lines, arranges them according to weekday
+    """
+    import datetime
+    working = []
+    start = datetime.datetime.fromtimestamp(utils.eat_keys(lis[0], ('date',
+                                                                    'epoch'))) 
+    if start > 0:
+        tmp = []
+        for j in range(box_height):
+            tmp.append(' ' * box_width)
+        for i in range(start):
+            working.append(tmp)
+    for day in lis:
+        working.append(format_single_day(day, formatter))
