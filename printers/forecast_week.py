@@ -26,11 +26,29 @@ def week_forecast(weat_db):
 def get_box_width(width):
     pass
 
+
 def get_box_height(formatter, height):
     pass
 
 
-def get_formatter():
+def temp_return_format():
+    """ temp function to return list to be parsed by get_formatter func
+    """
+    return ['', 'temp_high_f', '']
+
+
+def get_formatter(frmt_list, COLORS):
+    """ returns a list of functions to be called in turn on a weather_db
+    """
+    import printers.colorfuncs as cf
+    def blank_line(day, box_width):
+        return ' ' * box_width
+
+    def high_temp(day, box_width):
+        temp = utils.eat_keys(day, ('high', 'fahrenheit'))
+        return "{:^{wid}}".format(temp, wid=box_width)
+    
+    # TODO: dictionary matching format keys to functions
     pass
 
 
@@ -43,6 +61,8 @@ def format_weeks(lis, box_width, box_height, formatter):
     """
     import datetime
     working = []
+    # here we'll have:
+    # formatter = get_formatter(temp_return_format())
     start = int(datetime.datetime.fromtimestamp(
         utils.eat_keys(lis[0], ('date', 'epoch'))).weekday())
     if start > 0:
