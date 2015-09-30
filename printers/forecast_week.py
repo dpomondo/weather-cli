@@ -13,47 +13,72 @@ import utils.utilities as utils
 
 
 def week_forecast(weat_db):
-    color_flag = True   # this will eventually get set in a config file
-    COLORS = utils.get_colors(color_flag=color_flag)
+    #  color_flag = True   # this will eventually get set in a config file
+    #  COLORS = utils.get_colors(color_flag=color_flag)
     width = utils.get_terminal_width()
     height = utils.get_terminal_height()
-    num_days = len(weat_db)
-    formatter = get_formatter()
+    #  num_days = len(weat_db)
     box_width = get_box_width(width)
-    box_height = get_box_height(formatter, height)
+    box_height = get_box_height(temp_return_format, height)
+    formatted_days = format_weeks(weat_db, box_width,
+                                  box_height, get_formatter)
+    results = join_days(formatted_days, box_width, box_height)
+    return results
+
+
+def join_days(formatted_days, box_width, box_height):
+    res = []
+    while formatted_days:
+        for index in range(box_height):
+            res.append(''.join(d[index] for d in formatted_days[0:7]))
+        formatted_days = formatted_days[7:]
+    return res
 
 
 def get_box_width(width):
-    pass
+    # the following is a cheat:
+    return 15
 
 
 def get_box_height(formatter, height):
-    pass
+    return len(formatter())
 
 
 def temp_return_format():
     """ temp function to return list to be parsed by get_formatter func
     """
-    return ['', 'temp_high_f', '']
+    return ['blank', 'temp_high_f', 'blank']
 
 
-def get_formatter(frmt_list, COLORS):
+def get_formatter(frmt_list):
     """ returns a list of functions to be called in turn on a weather_db
     """
-    import printers.colorfuncs as cf
+    #  import printers.colorfuncs as cf
     def blank_line(day, box_width):
         return ' ' * box_width
 
     def high_temp(day, box_width):
         temp = utils.eat_keys(day, ('high', 'fahrenheit'))
         return "{:^{wid}}".format(temp, wid=box_width)
-    
+
     # TODO: dictionary matching format keys to functions
-    pass
+    switch = {'blank':          blank_line,
+              'temp_high_f':    high_temp}
+    # make the function list...
+    res = []
+    for frmt in frmt_list:
+        res.append(switch[frmt])
+    return res
 
 
-def format_single_day(day, formatter):
-    pass
+def format_single_day(day, formatter, box_width):
+    """ calls a list of function in formatter on the day object from a forcast
+        returns a list of lines formatted to box_width length
+    """
+    res = []
+    for func in formatter:
+        res.append(func(day, box_width))
+    return res
 
 
 def format_weeks(lis, box_width, box_height, formatter):
@@ -62,9 +87,11 @@ def format_weeks(lis, box_width, box_height, formatter):
     import datetime
     working = []
     # here we'll have:
-    # formatter = get_formatter(temp_return_format())
+    assert isinstance(lis, list)
+    assert isinstance(lis[0], dict)
+    format_func = formatter(temp_return_format())
     start = int(datetime.datetime.fromtimestamp(
-        utils.eat_keys(lis[0], ('date', 'epoch'))).weekday())
+        int(utils.eat_keys(lis[0], ('date', 'epoch')))).weekday())
     if start > 0:
         tmp = []
         for j in range(box_height):
@@ -72,4 +99,5 @@ def format_weeks(lis, box_width, box_height, formatter):
         for i in range(start):
             working.append(tmp)
     for day in lis:
-        working.append(format_single_day(day, formatter))
+        working.append(format_single_day(day, format_func, box_width))
+    return working

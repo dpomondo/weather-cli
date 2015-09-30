@@ -325,12 +325,14 @@ def main():
                         print(lin)
                     loop_flag = False
                 elif args.forecast:
+                    #  frmt = 'grid'
+                    frmt = 'week'
                     import printers.forecast
                     res = printers.forecast.print_forecast(
                         current['forecast']
                                ['simpleforecast']
                                ['forecastday'],
-                        frmt='grid')
+                        frmt=frmt)
                     for lin in res:
                         print(lin)
                     loop_flag = False
