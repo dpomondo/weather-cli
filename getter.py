@@ -86,8 +86,15 @@ def parse_arguments():
                         help='return hourly forecast'
                         )
     parser.add_argument('--forecast', '-f',
-                        action='store_true',
-                        help='return 10 day forecast'
+                        nargs='?',
+                        const='g',
+                        #  default='g',
+                        #  action='store',
+                        #  type=str,
+                        #  choices=['week', 'w', 'weeks',
+                                 #  'grid', 'g'],
+                        help="""return 10 day forecast, with optional specified
+                                format"""
                         )
     parser.add_argument('--update', '-u',
                         action='store_true',
@@ -101,13 +108,18 @@ def parse_arguments():
                         action='store_true',
                         help='look at local options'
                         )
+    # to understand the following, read the docs:
+    # https://docs.python.org/3.4/library/argparse.html#nargs
     parser.add_argument('--debug',
                         action='store',
+                        nargs='?',
+                        const='c',
                         #  default='c',
-                        type=str,
+                        #  type=str,
                         choices=['hour', 'h', 'forecast', 'f', 'current',
                                  'c'],
-                        help='print out current server response'
+                        help="""print out current server response for hour,
+                                forecast, or current (default)"""
                         )
     parser.add_argument('--files',
                         action='store_true',
@@ -115,7 +127,8 @@ def parse_arguments():
                         )
     parser.add_argument('--logging',
                         action='store_true',
-                        help='test the logging configuration'
+                        help="""test the logging configuration (returns nothing
+                                to the command line)"""
                         )
     return parser.parse_args()
 
@@ -259,6 +272,7 @@ def main():
     args = parse_arguments()
     logging.debug("Loaded args object. {} attrs in args.__dict__".format(
         len(args.__dict__)))
+
     configs = config.loaders.parse_config()
     loop_flag = True
     while loop_flag is True:
@@ -325,8 +339,14 @@ def main():
                         print(lin)
                     loop_flag = False
                 elif args.forecast:
-                    #  frmt = 'grid'
-                    frmt = 'week'
+                    #  print('args.forecast: {}'.format(args.forecast))
+                    if args.forecast.startswith('w'):
+                        frmt = 'week'
+                    elif args.forecast.startswith('g'):
+                        frmt = 'grid'
+                    else:
+                        # the default, should be set in a config file
+                        frmt = 'grid'
                     import printers.forecast
                     res = printers.forecast.print_forecast(
                         current['forecast']
