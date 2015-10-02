@@ -116,8 +116,7 @@ def parse_arguments():
                         const='c',
                         #  default='c',
                         #  type=str,
-                        choices=['hour', 'h', 'forecast', 'f', 'current',
-                                 'c'],
+                        choices=['hour', 'h', 'forecast', 'f', 'current', 'c'],
                         help="""print out current server response for hour,
                                 forecast, or current (default)"""
                         )

@@ -56,24 +56,28 @@ def parse_database(db_files, key_list, filter_func=lambda x: True):
     return res
 
 
-def main():
+def main(argv):
     # test list_dir and get_keys
     fils = list_dir()
-    total = 0
-    for f in fils:
-        try:
-            pass
-            #  print(f)
-            #  z = get_keys(f)
-            #  total += len(z)
-        except:
-            z = []
-        #  print("{}:\t{}".format(f, len(z)))
-    #  print("{} total files with {} total keys".format(len(fils), total))
+    if 'k' in argv or 'keys' in argv:
+        total = 0
+        for f in fils:
+            try:
+                #  print(f)
+                z = get_keys(f)
+                total += len(z)
+            except:
+                z = []
+            print("{}:\t{}".format(f, len(z)))
+    print("{} total files ".format(len(fils)), end='')
+    if 'k' in argv or 'keys' in argv:
+        print("with {} total keys".format(total), end='')
+    print()
     # test parse_database
     import random
     import pprint
     import shelve
+    import statistics
     target = random.sample(fils, 4)
     #  test_db = shelve.open(target)
     print('-' * 80)
@@ -83,9 +87,17 @@ def main():
     target_keys.append(('current_observation', 'wind_gust_mph'))
     res = parse_database(target, target_keys)
     for key in res:
-        print('-' * 40 + '\n' + str(key))
-        pprint.pprint(res[key])
+        print('-' * 40 )
+        #  pprint.pprint(res[key], compact=False)
+        print(str(key) + '\n' + "{} total results".format(len(res[key])))
+        print("{:<8}{:>5}".format("Mean:", statistics.mean(map(float,
+                                                               res[key]))))
+        print("{:<8}{:>5}".format("Median:", statistics.median(map(float,
+                                                               res[key]))))
+        print("{:<8}{:>5}".format("Mode:", statistics.mode(map(float,
+                                                           res[key]))))
 
 
 if __name__ == '__main__':
-    main()
+    import sys
+    main(sys.argv)
