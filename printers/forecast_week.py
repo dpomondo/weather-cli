@@ -24,25 +24,43 @@ def week_forecast(weat_db):
     box_height = get_box_height(format_list, height)
     formatted_days = format_weeks(weat_db, box_width,
                                   box_height, format_list, COLORS)
-    results = join_days(formatted_days, labels, box_width, box_height)
+    results = join_days(formatted_days, labels, width, box_width, box_height)
     return results
 
 
-def join_days(formatted_days, labels, box_width, box_height):
+def join_days(formatted_days, labels, width, box_width, box_height):
     res = []
     label_width = utils.max_len(labels)
+    total_width = label_width + (7 * box_width)
+    assert width > total_width
     while formatted_days:
         for index in range(box_height):
-            res.append("{:<{wid}}{}".format(labels[index],
-                       ''.join(d[index] for d in formatted_days[0:7]),
-                       wid=label_width))
+            temp = ''.join(d[index] for d in formatted_days[0:7])
+            temp = "{:>{wid}}{}".format(labels[index], temp, wid=label_width)
+            temp = "{:>{wid}}{}".format('', temp,
+                                        wid=int(0.5 * (width - total_width)))
+            res.append(temp)
         formatted_days = formatted_days[7:]
+    top = ' ' * label_width
+    for day in ['Monday',
+                'Tuesday',
+                'Wednesday',
+                'Thursday',
+                'Friday',
+                'Saturday',
+                'Sunday']:
+        top = "{}{:^{wid}}".format(top, day if box_width >= 10 else day[0:3],
+                                   wid=box_width)
+    #  res.insert(0, ' ' * int(0.5 * (width - total_width)) + top)
+    res.insert(0, "{:^{wid}}{}".format('', top,
+                                       wid=int(0.5 * (width - total_width))))
     return res
 
 
-def get_box_width(working_width):
+def get_box_width(width):
     # the following is a cheat:
-    return max(10, min(int(working_width/7), 20))
+    #  return 15
+    return max(6, min(int(width/7), 18))
 
 
 def get_box_height(formatter, height):
@@ -69,9 +87,9 @@ def make_formatter(frmt_list, COLOR):
     def date(day, _, box_width):
         temp = dt.datetime.fromtimestamp(int(utils.eat_keys(day, ('date',
                                                                   'epoch'))))
-        working = temp.strftime('%A, %B %d')
+        working = temp.strftime('%B %e')
         if len(working) * 1.5 > box_width:
-            working = temp.strftime('%a, %b %d')
+            working = temp.strftime('%b %e')
         return "{:^{wid}}".format(working[:box_width], wid=box_width)
 
     def high_temp(day, curr_day, box_width):
