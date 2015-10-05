@@ -18,17 +18,20 @@ def week_forecast(weat_db):
     COLORS = utils.get_colors(color_flag=color_flag)
     width = utils.get_terminal_width()
     height = utils.get_terminal_height()
-    #  num_days = len(weat_db)
-    format_list, labels = temp_return_format()
+    #  there has to be a more elegant way to do the following:
+    _format_lis = temp_return_format()
+    format_list = list(x[0] for x in _format_lis)
+    labels = list(x[1] for x in _format_lis)
     box_width = get_box_width(width - utils.max_len(labels))
     box_height = get_box_height(format_list, height)
-    formatted_days = format_weeks(weat_db, box_width,
-                                  box_height, format_list, COLORS)
-    results = join_days(formatted_days, labels, width, box_width, box_height)
+    formatted_days = format_day_list(weat_db, box_width,
+                                     box_height, format_list, COLORS)
+    results = join_days(formatted_days, labels, width, box_width, box_height,
+                        COLORS)
     return results
 
 
-def join_days(formatted_days, labels, width, box_width, box_height):
+def join_days(formatted_days, labels, width, box_width, box_height, COLORS):
     res = []
     label_width = utils.max_len(labels)
     total_width = label_width + (7 * box_width)
@@ -49,9 +52,11 @@ def join_days(formatted_days, labels, width, box_width, box_height):
                 'Friday',
                 'Saturday',
                 'Sunday']:
-        top = "{}{:^{wid}}".format(top, day if box_width >= 10 else day[0:3],
-                                   wid=box_width)
-    #  res.insert(0, ' ' * int(0.5 * (width - total_width)) + top)
+        top = "{}{}{:^{wid}}{}".format(top,
+                                       COLORS.italic,
+                                       day if box_width >= 10 else day[0:3],
+                                       COLORS.clear,
+                                       wid=box_width)
     res.insert(0, "{:^{wid}}{}".format('', top,
                                        wid=int(0.5 * (width - total_width))))
     return res
@@ -70,9 +75,21 @@ def get_box_height(formatter, height):
 def temp_return_format():
     """ temp function to return list to be parsed by make_formatter func
     """
-    frmt = ['date', 'blank', 'temp_high_f', 'temp_low_f', 'blank']
-    labels = ['', '', 'High', 'Low', '']
-    return frmt, labels
+    # TODO: return frmt as dict with header and body:
+    #   {'header':['days'],
+    #    'body':['blank', 'date', ... ]}
+    # Also, returning labels and funcs as tuples: ('', 'blank') and
+    # reconstructing the format_list and lable list instead of relying on
+    # coordination
+    frmt = [('date', ''),
+            ('blank', ''),
+            ('temp_high_f', 'High'),
+            ('temp_low_f', 'Low'),
+            #  ('blank', ''),
+            ('precip', 'Precipitation'),
+            ('blank', '')]
+    #  labels = ['', '', 'High', 'Low', '', ]
+    return frmt
 
 
 def make_formatter(frmt_list, COLOR):
@@ -81,8 +98,22 @@ def make_formatter(frmt_list, COLOR):
     import datetime as dt
     import printers.colorfuncs as cf
 
+    def dashed_line(day, _, box_width):
+        return '-' * box_width
+
+    def dashed_with_corners(day, _, box_width):
+        return "{}{}{}".format('+', '-' * box_width - 2, '+')
+
     def blank_line(day, _, box_width):
         return ' ' * box_width
+
+    def weekday(day, _, box_width):
+        temp = dt.datetime.fromtimestamp(int(utils.eat_keys(day, ('date',
+                                                                  'epoch'))))
+        working = temp.weekday()
+        if len(working) > box_width:
+            working = working[:3]
+        return "{:^{wid}}".format(working[:box_width], wid=box_width)
 
     def date(day, _, box_width):
         temp = dt.datetime.fromtimestamp(int(utils.eat_keys(day, ('date',
@@ -109,10 +140,23 @@ def make_formatter(frmt_list, COLOR):
                                       COLOR.clear,
                                       wid=box_width)
 
+    def precip(day, curr_day, box_width):
+        qpf = utils.eat_keys(day, ('qpf_allday', 'in'))
+        snow = utils.eat_keys(curr_day, ('snow_allday', 'in'))
+        return "{}{:^{wid}}{}".format(cf.bar_precip_color((qpf + snow) * 2.5,
+                                                          None, COLOR),
+                                      "{} {}".format(qpf+snow, "in"),
+                                      COLOR.clear,
+                                      wid=box_width)
+
     switch = {'date':           date,
+              'weekday':        weekday,
+              'dash':           dashed_line,
+              'dash_corn':      dashed_with_corners,
               'blank':          blank_line,
               'temp_high_f':    high_temp,
-              'temp_low_f':     low_temp}
+              'temp_low_f':     low_temp,
+              'precip':         precip}
     # make the function list...
     res = []
     for frmt in frmt_list:
@@ -130,7 +174,7 @@ def format_single_day(day, curr_day, formatter, box_width):
     return res
 
 
-def format_weeks(lis, box_width, box_height, format_list, COLOR):
+def format_day_list(lis, box_width, box_height, format_list, COLOR):
     """ takes a list of formatted lines, arranges them according to weekday
     """
     import datetime
