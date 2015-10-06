@@ -19,23 +19,30 @@ def week_forecast(weat_db):
     width = utils.get_terminal_width()
     height = utils.get_terminal_height()
     #  there has to be a more elegant way to do the following:
-    _format_lis = temp_return_format()
-    format_list = list(x[0] for x in _format_lis)
-    labels = list(x[1] for x in _format_lis)
+    format_tups = temp_return_format()
+    format_list = list(x[0] for x in format_tups)
+    labels = list(x[1] for x in format_tups)
     box_width = get_box_width(width - utils.max_len(labels))
     box_height = get_box_height(format_list, height)
     formatted_days = format_day_list(weat_db, box_width,
-                                     box_height, format_list, COLORS)
-    results = join_days(formatted_days, labels, width, box_width, box_height,
-                        COLORS)
+                                     box_height, format_list,
+                                     COLORS)
+    formatted_header = format_header(None, utils.max_len(labels), box_width,
+                                     COLORS)
+    results = join_days(formatted_days, formatted_header, labels, width,
+                        box_width, box_height, COLORS)
     return results
 
 
-def join_days(formatted_days, labels, width, box_width, box_height, COLORS):
+def join_days(formatted_days, formatted_header, labels, width, box_width,
+              box_height, COLORS):
     res = []
     label_width = utils.max_len(labels)
     total_width = label_width + (7 * box_width)
     assert width > total_width
+    for lin in formatted_header:
+        res.append("{:^{wid}}{}".format('', lin,
+                                        wid=int(0.5 * (width - total_width))))
     while formatted_days:
         for index in range(box_height):
             temp = ''.join(d[index] for d in formatted_days[0:7])
@@ -44,21 +51,6 @@ def join_days(formatted_days, labels, width, box_width, box_height, COLORS):
                                         wid=int(0.5 * (width - total_width)))
             res.append(temp)
         formatted_days = formatted_days[7:]
-    top = ' ' * label_width
-    for day in ['Monday',
-                'Tuesday',
-                'Wednesday',
-                'Thursday',
-                'Friday',
-                'Saturday',
-                'Sunday']:
-        top = "{}{}{:^{wid}}{}".format(top,
-                                       COLORS.italic,
-                                       day if box_width >= 10 else day[0:3],
-                                       COLORS.clear,
-                                       wid=box_width)
-    res.insert(0, "{:^{wid}}{}".format('', top,
-                                       wid=int(0.5 * (width - total_width))))
     return res
 
 
@@ -81,7 +73,8 @@ def temp_return_format():
     # Also, returning labels and funcs as tuples: ('', 'blank') and
     # reconstructing the format_list and lable list instead of relying on
     # coordination
-    frmt = [('date', ''),
+    frmt = [('dash', ''),
+            ('date', ''),
             ('blank', ''),
             ('temp_high_f', 'High'),
             ('temp_low_f', 'Low'),
@@ -171,6 +164,25 @@ def format_single_day(day, curr_day, formatter, box_width):
     res = []
     for func in formatter:
         res.append(func(day, curr_day, box_width))
+    return res
+
+
+def format_header(header_format, label_width, box_width, COLORS):
+    head = ' ' * label_width
+    for day in ['Monday',
+                'Tuesday',
+                'Wednesday',
+                'Thursday',
+                'Friday',
+                'Saturday',
+                'Sunday']:
+        head = "{}{}{:^{wid}}{}".format(head,
+                                        COLORS.italic,
+                                        day if box_width >= 10 else day[0:3],
+                                        COLORS.clear,
+                                        wid=box_width)
+    res = []
+    res.append(head)
     return res
 
 
