@@ -20,8 +20,8 @@ def week_forecast(weat_db):
     height = utils.get_terminal_height()
     #  there has to be a more elegant way to do the following:
     format_tups = temp_return_format()
-    format_list = list(x[0] for x in format_tups)
-    labels = list(x[1] for x in format_tups)
+    format_list = list(x[0] for x in format_tups['body'])
+    labels = list(x[1] for x in format_tups['body'])
     box_width = get_box_width(width - utils.max_len(labels))
     box_height = get_box_height(format_list, height)
     formatted_days = format_day_list(weat_db, box_width,
@@ -73,14 +73,15 @@ def temp_return_format():
     # Also, returning labels and funcs as tuples: ('', 'blank') and
     # reconstructing the format_list and lable list instead of relying on
     # coordination
-    frmt = [('dash', ''),
-            ('date', ''),
-            ('blank', ''),
-            ('temp_high_f', 'High'),
-            ('temp_low_f', 'Low'),
-            #  ('blank', ''),
-            ('precip', 'Precipitation'),
-            ('blank', '')]
+    frmt = {'body':     [('dash', ''),
+                         ('date', ''),
+                         ('blank', ''),
+                         ('temp_high_f', 'High'),
+                         ('temp_low_f', 'Low'),
+                         #  ('blank', ''),
+                         ('precip', 'Precipitation'),
+                         ('blank', '')]
+           }
     #  labels = ['', '', 'High', 'Low', '', ]
     return frmt
 
