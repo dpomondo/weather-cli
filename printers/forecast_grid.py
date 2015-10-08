@@ -146,11 +146,11 @@ def add_box_lines(lins, day_num, total_days, cols_nums):
     return new_lins
 
 
-def grid_forecast(weat_db):
+def grid_forecast(weat_db, width):
     # first, initialize all the vars
     color_flag = True   # this will eventually get set in a config file
     num_days = len(weat_db)
-    width = utils.get_terminal_width()
+    #  width = utils.get_terminal_width()
     height = utils.get_terminal_height()
     COLORS = utils.get_colors(color_flag=color_flag)
     max_cols, box_width = get_box_size(len(weat_db), width)

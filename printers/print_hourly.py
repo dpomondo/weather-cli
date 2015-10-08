@@ -15,9 +15,9 @@ if '/usr/self/weather' not in sys.path:
 #  import printers.colorfuncs as cf
 
 
-def print_hourly(hourly_wdb, sun_wdb, configs):
+def print_hourly(hourly_wdb, sun_wdb, configs, width):
     import utils.utilities
-    width = utils.utilities.get_terminal_width()
+    #  width = utils.utilities.get_terminal_width()
     height = utils.utilities.get_terminal_height()
     COLORS = utils.utilities.get_colors(color_flag=True)
     if configs.print_hourly == 'lines':

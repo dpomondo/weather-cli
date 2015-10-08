@@ -87,12 +87,11 @@ def parse_arguments():
                         )
     parser.add_argument('--forecast', '-f',
                         nargs='?',
+                        #  nargs='*',
                         const='g',
                         #  default='g',
                         #  action='store',
                         #  type=str,
-                        #  choices=['week', 'w', 'weeks',
-                                 #  'grid', 'g'],
                         help="""return 10 day forecast, with optional specified
                                 format"""
                         )
@@ -128,6 +127,13 @@ def parse_arguments():
                         action='store_true',
                         help="""test the logging configuration (returns nothing
                                 to the command line)"""
+                        )
+    parser.add_argument('--width',
+                        action='store',
+                        nargs='?',
+                        const=80,
+                        type=int,
+                        help="Limit screen width to given integer"
                         )
     return parser.parse_args()
 
@@ -262,6 +268,7 @@ def main():
         sys.path.append(home_dir)
     import config.loaders
     import logging
+    import utils.utilities as utils
     config_file = config.loaders.config_file_name()
     weather_db_name = config.loaders.day_file_name()
     log_file = config.loaders.log_file_name()
@@ -291,6 +298,10 @@ def main():
                 import returner
                 current = returner.main()
 
+                if args.width:
+                    screen_width = min(utils.get_terminal_width(), args.width)
+                else:
+                    screen_width = utils.get_terminal_width()
                 if args.logging:
                     logging.info("Sending test message -- all is well!")
                     loop_flag = False
@@ -332,16 +343,19 @@ def main():
                 elif args.hourly:
                     import printers.print_hourly
                     res = printers.print_hourly.print_hourly(
-                        current['hourly_forecast'], current['sun_phase'],
-                        configs)
+                        current['hourly_forecast'],
+                        current['sun_phase'],
+                        configs,
+                        screen_width)
                     for lin in res:
                         print(lin)
                     loop_flag = False
                 elif args.forecast:
-                    #  print('args.forecast: {}'.format(args.forecast))
-                    if args.forecast.startswith('w'):
+                    #  print('args.forecst: {}'.format(args.forecast))
+                    #  if args.forecast.startswith('w'):
+                    if args.forecast[0].startswith('w'):
                         frmt = 'week'
-                    elif args.forecast.startswith('g'):
+                    elif args.forecast[0].startswith('g'):
                         frmt = 'grid'
                     else:
                         # the default, should be set in a config file
@@ -351,7 +365,8 @@ def main():
                         current['forecast']
                                ['simpleforecast']
                                ['forecastday'],
-                        frmt=frmt)
+                        frmt=frmt,
+                        screen_width=screen_width)
                     for lin in res:
                         print(lin)
                     loop_flag = False

@@ -12,18 +12,20 @@
 import sys
 if '/usr/self/weather' not in sys.path:
     sys.path.append('/usr/self/weather/')
-#  import utils.utilities
+import utils.utilities as utils
 
 
-def print_forecast(weat_db, frmt='lines'):
+def print_forecast(weat_db, frmt='lines', screen_width=None):
+    if screen_width is None:
+        screen_width = utils.get_terminal_width()
     if frmt == 'lines':
         res = lines_forecast(weat_db)
     elif frmt == 'grid':
         import printers.forecast_grid as fg
-        res = fg.grid_forecast(weat_db)
+        res = fg.grid_forecast(weat_db, screen_width)
     elif frmt == 'week':
         import printers.forecast_week as fw
-        res = fw.week_forecast(weat_db)
+        res = fw.week_forecast(weat_db, screen_width)
     else:
         res = lines_forecast(weat_db)
     return res

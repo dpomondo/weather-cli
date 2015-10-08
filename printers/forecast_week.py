@@ -12,11 +12,11 @@ if '/usr/self/weather' not in sys.path:
 import utils.utilities as utils
 
 
-def week_forecast(weat_db):
+def week_forecast(weat_db, width):
     color_flag = True   # this will eventually get set in a config file
     #  color_flag = False   # this will eventually get set in a config file
     COLORS = utils.get_colors(color_flag=color_flag)
-    width = utils.get_terminal_width()
+    #  width = utils.get_terminal_width()
     height = utils.get_terminal_height()
     #  there has to be a more elegant way to do the following:
     format_tups = temp_return_format()
