@@ -21,9 +21,22 @@ def week_forecast(weat_db):
     #  there has to be a more elegant way to do the following:
     format_tups = temp_return_format()
     format_list = list(x[0] for x in format_tups['body'])
-    labels = list(x[1] for x in format_tups['body'])
+    labels = []
+    #  labels = list(x[1] for x in format_tups['body'])
+    for lab in format_tups['body']:
+        if lab[2] == 1:
+            labels.append(lab[1])
+        elif lab[2] > 1:
+            temp = []
+            temp.append(lab[1])
+            for i in range(lab[2] - 1):
+                temp.append('')
+            labels.extend(temp)
+        else:
+            raise ValueError("formatter returned negative value")
     box_width = get_box_width(width - utils.max_len(labels))
-    box_height = get_box_height(format_list, height)
+    #  box_height = get_box_height(format_list, height)
+    box_height = get_box_height(format_tups['body'], height)
     formatted_days = format_day_list(weat_db, box_width,
                                      box_height, format_list,
                                      COLORS)
@@ -61,7 +74,8 @@ def get_box_width(width):
 
 
 def get_box_height(formatter, height):
-    return len(formatter)
+    #  return len(formatter)
+    return sum(list(x[2] for x in formatter))
 
 
 def temp_return_format():
@@ -73,16 +87,16 @@ def temp_return_format():
     # Also, returning labels and funcs as tuples: ('', 'blank') and
     # reconstructing the format_list and lable list instead of relying on
     # coordination
-    frmt = {'body':     [('dash', ''),
-                         ('date', ''),
-                         ('blank', ''),
-                         ('temp_high_f', 'High'),
-                         ('temp_low_f', 'Low'),
-                         #  ('blank', ''),
-                         ('precip', 'Precipitation'),
-                         ('wind_sd', 'Wind (mph)'),
-                         ('conditions', 'Conditions'),
-                         ('blank', '')]
+    frmt = {'body':     [('dash', '', 1),
+                         ('date', '', 1),
+                         ('blank', '', 1),
+                         ('temp_high_f', 'High', 1),
+                         ('temp_low_f', 'Low', 1),
+                         #  ('blank', '', 1),
+                         ('precip', 'Precipitation', 1),
+                         ('wind_sd', 'Wind (mph)', 1),
+                         ('conditions', 'Conditions', 2),
+                         ('blank', '', 1)]
                          }
     #  labels = ['', '', 'High', 'Low', '', ]
     return frmt
@@ -166,24 +180,25 @@ def make_formatter(frmt_list, COLOR):
 
     def conditions(day, curr_day, box_width):
         conds = utils.eat_keys(day, ('conditions',))
-        if len(conds) < box_width - 1:
+        if len(conds) < box_width:
             first = "{}{:^{wid}}{}".format(COLOR.cond, conds, COLOR.clear,
                                            wid=box_width)
             second = ' ' * box_width
-            return [first, second]
+            #  return [first, second]
         else:
             tmp = conds.split(' ')
             first, second = '', ''
-            while len(first) < box_width:
-                first = first + tmp[0] + ' '
+            while len(first) + len(tmp[0]) < box_width:
+                first = first + ' ' + tmp[0]
                 tmp = tmp[1:]
-            first = "{}{:>{wid}}{}".format(COLOR.cond, first, COLOR.clear,
+            first = "{}{:^{wid}}{}".format(COLOR.cond, first.lstrip(),
+                                           COLOR.clear,
                                            wid=box_width)
-            second = "{}{:>{wid}}{}".format(COLOR.cond,
+            second = "{}{:^{wid}}{}".format(COLOR.cond,
                                             ' '.join(tmp)[:box_width],
                                             COLOR.clear,
                                             wid=box_width)
-            return [first, second]
+        return [first, second]
 
     switch = {'date':           date,
               'weekday':        weekday,
