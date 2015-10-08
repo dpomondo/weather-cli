@@ -39,7 +39,7 @@ def join_days(formatted_days, formatted_header, labels, width, box_width,
     res = []
     label_width = utils.max_len(labels)
     total_width = label_width + (7 * box_width)
-    assert width > total_width
+    #  assert width > total_width
     for lin in formatted_header:
         res.append("{:^{wid}}{}".format('', lin,
                                         wid=int(0.5 * (width - total_width))))
@@ -80,8 +80,10 @@ def temp_return_format():
                          ('temp_low_f', 'Low'),
                          #  ('blank', ''),
                          ('precip', 'Precipitation'),
+                         ('wind_sd', 'Wind (mph)'),
+                         ('conditions', 'Conditions'),
                          ('blank', '')]
-           }
+                         }
     #  labels = ['', '', 'High', 'Low', '', ]
     return frmt
 
@@ -136,12 +138,52 @@ def make_formatter(frmt_list, COLOR):
 
     def precip(day, curr_day, box_width):
         qpf = utils.eat_keys(day, ('qpf_allday', 'in'))
-        snow = utils.eat_keys(curr_day, ('snow_allday', 'in'))
-        return "{}{:^{wid}}{}".format(cf.bar_precip_color((qpf + snow) * 2.5,
-                                                          None, COLOR),
+        snow = utils.eat_keys(day, ('snow_allday', 'in'))
+        return "{}{:^{wid}}{}".format(cf.inch_precip_color((qpf + snow),
+                                                           None, COLOR),
                                       "{} {}".format(qpf+snow, "in"),
                                       COLOR.clear,
                                       wid=box_width)
+
+    def wind_speed_dir(day, curr_day, box_width):
+        speed = utils.eat_keys(day, ('maxwind', 'mph'))
+        direction = utils.eat_keys(day, ('maxwind', 'dir'))
+        curr_speed = utils.eat_keys(curr_day, ('maxwind', 'mph'))
+        if direction is not None:
+            return "{}{:^{wid}}{}".format(cf.bar_temp_color(speed,
+                                                            curr_speed,
+                                                            COLOR),
+                                          "{} {}".format(speed, direction),
+                                          COLOR.clear,
+                                          wid=box_width)
+        else:
+            return "{}{:^{wid}}{}".format(cf.bar_temp_color(speed,
+                                                            curr_speed,
+                                                            COLOR),
+                                          speed,
+                                          COLOR.clear,
+                                          wid=box_width)
+
+    def conditions(day, curr_day, box_width):
+        conds = utils.eat_keys(day, ('conditions',))
+        if len(conds) < box_width - 1:
+            first = "{}{:^{wid}}{}".format(COLOR.cond, conds, COLOR.clear,
+                                           wid=box_width)
+            second = ' ' * box_width
+            return [first, second]
+        else:
+            tmp = conds.split(' ')
+            first, second = '', ''
+            while len(first) < box_width:
+                first = first + tmp[0] + ' '
+                tmp = tmp[1:]
+            first = "{}{:>{wid}}{}".format(COLOR.cond, first, COLOR.clear,
+                                           wid=box_width)
+            second = "{}{:>{wid}}{}".format(COLOR.cond,
+                                            ' '.join(tmp)[:box_width],
+                                            COLOR.clear,
+                                            wid=box_width)
+            return [first, second]
 
     switch = {'date':           date,
               'weekday':        weekday,
@@ -150,7 +192,9 @@ def make_formatter(frmt_list, COLOR):
               'blank':          blank_line,
               'temp_high_f':    high_temp,
               'temp_low_f':     low_temp,
-              'precip':         precip}
+              'precip':         precip,
+              'wind_sd':        wind_speed_dir,
+              'conditions':     conditions}
     # make the function list...
     res = []
     for frmt in frmt_list:
@@ -164,7 +208,14 @@ def format_single_day(day, curr_day, formatter, box_width):
     """
     res = []
     for func in formatter:
-        res.append(func(day, curr_day, box_width))
+        temp = func(day, curr_day, box_width)
+        if isinstance(temp, str):
+            res.append(temp)
+        elif isinstance(temp, list):
+            res.extend(temp)
+        else:
+            raise ValueError("string or list expected, {} returned".format(
+                type(temp)))
     return res
 
 

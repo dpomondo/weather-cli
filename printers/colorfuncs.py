@@ -18,6 +18,13 @@ def bar_precip_color(target, _,  COLOR):
             COLOR.precip100)
 
 
+def inch_precip_color(target, _,  COLOR):
+    return (COLOR.precip25 if target == 0.0 else
+            COLOR.precip50 if target < 1.0 else
+            COLOR.precip75 if target < 2.5 else
+            COLOR.precip100)
+
+
 def bar_wind_color(target, curr, COLOR):
     return bar_temp_color(target, curr, COLOR)
 
