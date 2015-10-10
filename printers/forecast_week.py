@@ -95,9 +95,9 @@ def temp_return_format():
                          #  ('blank', '', 1),
                          ('precip', 'Precipitation', 1),
                          ('wind_sd', 'Wind (mph)', 1),
-                         ('conditions', 'Conditions', 2),
-                         ('blank', '', 1)]
-                         }
+                         ('conditions', 'Conditions', 2)
+                         #  ('blank', '', 1)
+                        ]}
     #  labels = ['', '', 'High', 'Low', '', ]
     return frmt
 
