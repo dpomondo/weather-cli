@@ -20,6 +20,8 @@ def list_dir(verbose=True):
     files = os.listdir(data_dir)
     res = list(os.path.abspath(os.path.join(os.getcwd(), data_dir, fil)) for
                fil in files if not fil.endswith('.json'))
+    if verbose:
+        print("{} files found in {}".format(len(res), data_dir))
     attribute = 'st_birthtime'
     if verbose:
         print("sorting by '{}' attribute".format(attribute))
@@ -34,24 +36,35 @@ def get_keys(weat_db):
     return keys
 
 
-def parse_database(db_files, key_list, filter_func=lambda x: True):
+def parse_database(db_files, key_list,
+                   parse_func=None,
+                   filter_func=lambda x: True):
     """ returns a dictionary consisting of data parsed from a list of files.
 
         key_list:   a tuple of strings, suitable for eat_keys func
     """
     import shelve
     import utils.utilities as utils
+    if parse_func is None:
+        parse_func = utils.eat_keys
+    assert not isinstance(parse_func, tuple)
+    if not isinstance(db_files, list):
+        temp = []
+        temp.append(db_files)
+        db_files = temp
     res = {}
     for k in key_list:
         res[k] = []
     for fil in db_files:
         #  print("Opening {}...".format(fil))
         tar = shelve.open(fil)
-        keys = list(z for z in list(tar.keys()) if z != 'current_response')
+        keys = sorted(list(z for z in list(tar.keys()) if z !=
+                           'current_response'))
         for ky in keys:
             if filter_func(tar[ky]) is True:
                 for k in key_list:
-                    res[k].append(utils.eat_keys(tar[ky], k))
+                    res[k].append(parse_func(tar[ky], k))
+                    #  res[k].append(utils.eat_keys(tar[ky], k))
         tar.close()
     return res
 
