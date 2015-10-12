@@ -7,6 +7,13 @@
 # -----------------------------------------------------------------------------
 
 
+def indexer(_x, mn, diff, col_height):
+    if col_height > 1 and diff > 0:
+        return (col_height - 1) - int((_x - mn) / diff * (col_height - 1))
+    else:
+        return 0
+
+
 def new_cols_formatter(l, start, func_obj, color_func, COLOR,
                        col_height=11, col_width=6):
     """ formats a list of strings, based on an input list.
@@ -34,18 +41,12 @@ def new_cols_formatter(l, start, func_obj, color_func, COLOR,
     diff = mx - mn
     #  helper func:
 
-    def indexer(_x):
-        if col_height > 1 and diff > 0:
-            return (col_height - 1) - int((_x - mn) / diff * (col_height - 1))
-        else:
-            return 0
-
     #  print("min: {} max: {} diff: {}".format(mn, mx, diff))
-    star_index = indexer(start)
+    star_index = indexer(start, mn, diff, col_height)
     for i in range(col_height):
         res.append("")
     for num in l:
-        ind = indexer(num)
+        ind = indexer(num, mn, diff, col_height)
         for j in range(col_height):
             zing = ""
             if j == ind:
