@@ -34,14 +34,20 @@ def new_cols_formatter(l, start, func_obj, color_func, COLOR,
         for key in func_obj:
             setattr(temp, key, func_obj[key])
         func_obj = temp
-    res = []
+    #  res = []
     if start is None:
         start = l[0]
     mx, mn = max(l), min(l)
     diff = mx - mn
-    #  helper func:
-
+    res = column_maker(l, start, mn, diff, col_height, col_width,
+                       func_obj, color_func, COLOR)
     #  print("min: {} max: {} diff: {}".format(mn, mx, diff))
+    return res, indexer(start, mn, diff, col_height)
+
+
+def column_maker(l, start, mn, diff, col_height, col_width,
+                 func_obj, color_func, COLOR):
+    res = []
     star_index = indexer(start, mn, diff, col_height)
     for i in range(col_height):
         res.append("")
@@ -66,7 +72,34 @@ def new_cols_formatter(l, start, func_obj, color_func, COLOR,
                         "",
                         COLOR.clear)
             res[j] += "{}{:^{wid}}{}".format(*zing, wid=col_width)
-    return res, star_index
+    return res
+
+
+def new_column_maker(l, start, mn, diff, col_height, col_width,
+                 func_obj, color_func, COLOR):
+    res = []
+    for num in l:
+        pass
+
+
+def single_column(num, target, func_obj, color_func, height, width):
+    """ helper function
+    """
+    res = []
+    for ind in range(height):
+        if ind == num:
+            res.append("{}{:^{wid}}{}".format(color_func(num, target, COLOR),
+                                              func_obj.equal(num, width),
+                                              COLOR.clear))
+        elif ind > num:
+            res.append("{}{:^{wid}}{}".format(color_func(num, target, COLOR),
+                                              func_obj.above(num, width),
+                                              COLOR.clear))
+        else:
+            res.append("{}{:^{wid}}{}".format(COLOR.clear,
+                                              func_obj.below(num, width),
+                                              COLOR.clear))
+    return res
 
 
 def main_old(verbose=True):
