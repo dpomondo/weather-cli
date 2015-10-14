@@ -75,8 +75,25 @@ def column_maker(l, start, mn, diff, col_height, col_width,
     return res
 
 
+def scale_formatter(high, low, height, format_func=lambda x: str(x),
+                    right_string=' | ', *fargs):
+    import sys
+    home_dir = '/usr/self/weather/'
+    if home_dir not in sys.path:
+        sys.path.append(home_dir)
+    import utils.utilities as utils
+    distance = (high - low) / height
+    collected, res = [], []
+    for ind in range(height):
+        collected.append(format_func(high - (distance * ind), *fargs))
+    longest = utils.max_len(collected)
+    for itm in collected:
+        res.append("{:>{wid}}{}".format(str(itm), right_string, wid=longest))
+    return res
+
+
 def new_column_maker(l, start, mn, diff, col_height, col_width,
-                 func_obj, color_func, COLOR):
+                     func_obj, color_func, COLOR):
     res = []
     for num in l:
         pass
@@ -128,7 +145,11 @@ def main_old(verbose=True):
     target_keys = []
     target_keys.append(('current_observation', 'temp_f'))
     opened = fu.parse_database(target, target_keys)
-    parsed = opened[target_keys[0]][:width//4]
+    #  parsed = opened[target_keys[0]][:width//4]
+    full = opened[target_keys[0]]
+    scale = scale_formatter(max(full), min(full), 20, 
+                            format_func=lambda x: str(int(x)))
+    parsed = full[:(width//4) - len(scale[0])]
     if verbose:
         print(", which has {} items".format(len(parsed)))
     start = 0 if random.random() < 0.5 else None
@@ -139,6 +160,9 @@ def main_old(verbose=True):
                                      COLOR,
                                      col_height=20,
                                      col_width=4)
+    assert len(res) == len(scale)
+    for ind in range(len(res)):
+        res[ind] = "{}{}".format(scale[ind], res[ind])
     for lin in res:
         print(lin)
 
