@@ -75,6 +75,24 @@ def column_maker(l, start, mn, diff, col_height, col_width,
     return res
 
 
+#  def label_formatter(ll, col_width, format_func=lambda x: str(x), *fargs):
+def label_formatter(ll, col_width, format_func, *fargs):
+    checks, formatted = [], []
+    for itm in ll:
+        checks.append('{:^{wid}}'.format('+', wid=col_width))
+        temp = format_func(itm, *fargs)
+        formatted.append('{:^{wid}}'.format(str(temp)[:col_width],
+                                            wid=col_width))
+    res = []
+    res.append(''.join(checks))
+    res.append(''.join(formatted))
+    return res
+
+
+def wrapper_label(ll, col_width, format_func=lambda x: str(x), *fargs):
+    return label_formatter(ll, col_width, format_func=lambda x: str(x), *fargs)
+
+
 def scale_formatter(high, low, height, format_func=lambda x: str(x),
                     right_string=' | ', *fargs):
     import sys
@@ -121,34 +139,44 @@ def single_column(num, target, func_obj, color_func, height, width):
 
 def main_old(verbose=True):
     import sys
+    import random
+    import datetime as dt
     home_dir = '/usr/self/weather/'
     if home_dir not in sys.path:
         sys.path.append(home_dir)
     import utils.file_utils as fu
     import utils.utilities as utils
     width = utils.get_terminal_width()
-    import random
+
+    # make the passed-in objects
+    col_width=4
+    col_height=20
     funcs = {}
     funcs['above'] = lambda x, y: "+" * y
     funcs['equal'] = lambda x, y: str(x)[:y]
     funcs['below'] = lambda x, y: '-' * y
+    target_keys = []
+    target_keys.append(('current_observation', 'temp_f'))
+    target_keys.append(('current_observation', 'observation_epoch'))
+    #  date_func = lambda x: dt.datetime.fromtimestamp(int(x)).strftime('%j')
+    def date_func(zed):
+        temp = dt.datetime.fromtimestamp(int(zed))
+        #  print(zed, temp, temp.strftime('%j'))
+        return temp.strftime('%j')
+
     # do the thing:
     COLOR = utils.get_colors()
     fils = fu.list_dir(verbose)
     if verbose:
         print("{} files found...".format(len(fils)))
     target = random.choice(fils)
-    #  target = []
-    #  target.append(random.choice(fils))
     if verbose:
         print("opening {}".format(target), end="")
-    target_keys = []
-    target_keys.append(('current_observation', 'temp_f'))
     opened = fu.parse_database(target, target_keys)
-    #  parsed = opened[target_keys[0]][:width//4]
     full = opened[target_keys[0]]
-    scale = scale_formatter(max(full), min(full), 20, 
+    scale = scale_formatter(max(full), min(full), col_height, 
                             format_func=lambda x: str(int(x)))
+    #  date_labels = label_formatter(epochs, col_width, format_func=date_func)
     parsed = full[:(width//4) - len(scale[0])]
     if verbose:
         print(", which has {} items".format(len(parsed)))
@@ -158,11 +186,21 @@ def main_old(verbose=True):
                                      funcs,
                                      lambda x, y, z: '',
                                      COLOR,
-                                     col_height=20,
-                                     col_width=4)
+                                     col_height=col_height,
+                                     col_width=col_width)
     assert len(res) == len(scale)
     for ind in range(len(res)):
         res[ind] = "{}{}".format(scale[ind], res[ind])
+
+    # make the labels
+    epochs = opened[target_keys[1]]
+    date_labels = label_formatter(epochs[:(width//col_width) - len(scale[0])], 
+                                  col_width, date_func)
+    for ind in range(len(date_labels)):
+        date_labels[ind] = '{}{}'.format(' ' * len(scale[0]), date_labels[ind])
+        res.append(date_labels[ind])
+
+    # print the result
     for lin in res:
         print(lin)
 
