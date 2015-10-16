@@ -79,7 +79,7 @@ def column_maker(l, start, mn, diff, col_height, col_width,
 def label_formatter(ll, col_width, format_func, *fargs):
     checks, formatted = [], []
     for itm in ll:
-        checks.append('{:^{wid}}'.format('+', wid=col_width))
+        checks.append('{:-^{wid}}'.format('+', wid=col_width))
         temp = format_func(itm, *fargs)
         formatted.append('{:^{wid}}'.format(str(temp)[:col_width],
                                             wid=col_width))
@@ -137,7 +137,22 @@ def single_column(num, target, func_obj, color_func, height, width):
     return res
 
 
-def main_old(verbose=True):
+def join_all(cols, scale, labels):
+    """ combines formatted lists into one list of lines.
+
+        cols:       new-cols_formatter
+        scale:      scale_formatter
+        labels:     label_formatter
+        """
+    res = []
+    for ind in range(len(cols)):
+        res.append("{}{}".format(scale[ind], cols[ind]))
+    for ind in range(len(labels)):
+        #  date_labels[ind] = '{}{}'.format(' ' * len(scale[0]), date_labels[ind])
+        res.append('{}{}'.format(' ' * len(scale[0]), labels[ind]))
+    return res
+
+def main(verbose=True):
     import sys
     import random
     import datetime as dt
@@ -149,23 +164,21 @@ def main_old(verbose=True):
     width = utils.get_terminal_width()
 
     # make the passed-in objects
-    col_width=4
+    col_width=6
     col_height=20
     funcs = {}
-    funcs['above'] = lambda x, y: "+" * y
+    funcs['above'] = lambda x, y: "{}{}{}".format(' ', '+' * (y - 2), ' ')
     funcs['equal'] = lambda x, y: str(x)[:y]
-    funcs['below'] = lambda x, y: '-' * y
+    funcs['below'] = lambda x, y: "{}{}{}".format(' ', '-' * (y - 2), ' ')
     target_keys = []
     target_keys.append(('current_observation', 'temp_f'))
     target_keys.append(('current_observation', 'observation_epoch'))
-    #  date_func = lambda x: dt.datetime.fromtimestamp(int(x)).strftime('%j')
+    COLOR = utils.get_colors()
     def date_func(zed):
         temp = dt.datetime.fromtimestamp(int(zed))
-        #  print(zed, temp, temp.strftime('%j'))
-        return temp.strftime('%j')
+        return temp.strftime('%H:%M')
 
-    # do the thing:
-    COLOR = utils.get_colors()
+    # choose the random file
     fils = fu.list_dir(verbose)
     if verbose:
         print("{} files found...".format(len(fils)))
@@ -173,65 +186,34 @@ def main_old(verbose=True):
     if verbose:
         print("opening {}".format(target), end="")
     opened = fu.parse_database(target, target_keys)
+
+    # start the parsing (this is the part that will get put into the wrapper
+    # function)
     full = opened[target_keys[0]]
     scale = scale_formatter(max(full), min(full), col_height, 
                             format_func=lambda x: str(int(x)))
-    #  date_labels = label_formatter(epochs, col_width, format_func=date_func)
-    parsed = full[:(width//4) - len(scale[0])]
+    parsed = full[:(width - len(scale[0]))//col_width]
     if verbose:
         print(", which has {} items".format(len(parsed)))
     start = 0 if random.random() < 0.5 else None
-    res, st_ind = new_cols_formatter(parsed,
+    cols, st_ind = new_cols_formatter(parsed,
                                      start,
                                      funcs,
                                      lambda x, y, z: '',
                                      COLOR,
                                      col_height=col_height,
                                      col_width=col_width)
-    assert len(res) == len(scale)
-    for ind in range(len(res)):
-        res[ind] = "{}{}".format(scale[ind], res[ind])
 
     # make the labels
     epochs = opened[target_keys[1]]
-    date_labels = label_formatter(epochs[:(width//col_width) - len(scale[0])], 
+    date_labels = label_formatter(epochs[:(width - len(scale[0]))//col_width],
                                   col_width, date_func)
-    for ind in range(len(date_labels)):
-        date_labels[ind] = '{}{}'.format(' ' * len(scale[0]), date_labels[ind])
-        res.append(date_labels[ind])
 
     # print the result
+    res = join_all(cols, scale, date_labels)
     for lin in res:
         print(lin)
 
-
-def main():
-    import sys
-    home_dir = '/usr/self/weather/'
-    if home_dir not in sys.path:
-        sys.path.append(home_dir)
-    #  import utils.file_utils as fu
-    import utils.utilities as utils
-    import random
-    COLOR = utils.get_colors()
-    funcs = {}
-    funcs['above'] = lambda x, y: "+" * y
-    funcs['equal'] = lambda x, y: str(x)[:y]
-    funcs['below'] = lambda x, y: '-' * y
-
-    parsed = []
-    for i in range(20):
-        parsed.append(str(random.random() * 100))
-    start = 0 if random.random() < 0.5 else None
-    res, st_ind = new_cols_formatter(parsed,
-                                     start,
-                                     funcs,
-                                     lambda x, y, z: '',
-                                     COLOR,
-                                     col_height=20,
-                                     col_width=4)
-    for lin in res:
-        print(lin)
 
 if __name__ == '__main__':
-    main_old()
+    main()
