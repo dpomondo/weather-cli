@@ -29,6 +29,10 @@ def bar_wind_color(target, curr, COLOR):
     return bar_temp_color(target, curr, COLOR)
 
 
+def new_alternating_bg(test_func, COLOR, *args):
+    return COLOR.grey_background if test_func(*args) else COLOR.clear
+
+
 def alternating_background(target, test_func, COLOR):
     if ((isinstance(target, tuple) or isinstance(target, list)) and
             len(target)) == 2:

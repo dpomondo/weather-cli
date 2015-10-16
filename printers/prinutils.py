@@ -76,13 +76,16 @@ def column_maker(l, start, mn, diff, col_height, col_width,
 
 
 #  def label_formatter(ll, col_width, format_func=lambda x: str(x), *fargs):
-def label_formatter(ll, col_width, format_func, *fargs):
+def label_formatter(ll, col_width, format_func, color_func, COLOR, *fargs):
     checks, formatted = [], []
-    for itm in ll:
+    test = lambda x: x % 2 == 0
+    for ind in range(len(ll)):
         checks.append('{:-^{wid}}'.format('+', wid=col_width))
-        temp = format_func(itm, *fargs)
-        formatted.append('{:^{wid}}'.format(str(temp)[:col_width],
-                                            wid=col_width))
+        temp = format_func(ll[ind], *fargs)
+        formatted.append('{}{:^{wid}}{}'.format(color_func(test, COLOR, ind),
+                                                str(temp)[:col_width],
+                                                COLOR.clear,
+                                                wid=col_width))
     res = []
     res.append(''.join(checks))
     res.append(''.join(formatted))
@@ -161,10 +164,11 @@ def main(verbose=True):
         sys.path.append(home_dir)
     import utils.file_utils as fu
     import utils.utilities as utils
+    import printers.colorfuncs as cf
     width = utils.get_terminal_width()
 
     # make the passed-in objects
-    col_width=6
+    col_width=5
     col_height=20
     funcs = {}
     funcs['above'] = lambda x, y: "{}{}{}".format(' ', '+' * (y - 2), ' ')
@@ -195,11 +199,13 @@ def main(verbose=True):
     parsed = full[:(width - len(scale[0]))//col_width]
     if verbose:
         print(", which has {} items".format(len(parsed)))
-    start = 0 if random.random() < 0.5 else None
+    #  start = 0 if random.random() < 0.5 else None
+    start = None
     cols, st_ind = new_cols_formatter(parsed,
                                      start,
                                      funcs,
-                                     lambda x, y, z: '',
+                                     #  lambda x, y, z: '',
+                                     cf.bar_temp_color,
                                      COLOR,
                                      col_height=col_height,
                                      col_width=col_width)
@@ -207,7 +213,8 @@ def main(verbose=True):
     # make the labels
     epochs = opened[target_keys[1]]
     date_labels = label_formatter(epochs[:(width - len(scale[0]))//col_width],
-                                  col_width, date_func)
+                                  col_width, date_func,
+                                  cf.new_alternating_bg, COLOR)
 
     # print the result
     res = join_all(cols, scale, date_labels)
