@@ -7,11 +7,13 @@
 # -----------------------------------------------------------------------------
 
 
-def indexer(_x, mn, diff, col_height):
-    if col_height > 1 and diff > 0:
-        return (col_height - 1) - int((_x - mn) / diff * (col_height - 1))
-    else:
-        return 0
+def indexer_maker(mn, mx, height):
+    def indexer(_x):
+        if height > 1 and mx - mn > 0:
+            return (height - 1) - int((_x - mn) / (mx - mn) * height - 1)
+        else:
+            return 0
+    return indexer
 
 
 def new_cols_formatter(l, start, func_obj, color_func, COLOR,
@@ -38,32 +40,31 @@ def new_cols_formatter(l, start, func_obj, color_func, COLOR,
     if start is None:
         start = l[0]
     mx, mn = max(l), min(l)
-    diff = mx - mn
-    res = column_maker(l, start, mn, diff, col_height, col_width,
+    zindexer = indexer_maker(mn, mx, col_height)
+    res = column_maker(l, start, zindexer, col_height, col_width,
                        func_obj, color_func, COLOR)
-    #  print("min: {} max: {} diff: {}".format(mn, mx, diff))
-    return res, indexer(start, mn, diff, col_height)
+    return res, zindexer(start)
 
 
-def column_maker(l, start, mn, diff, col_height, col_width,
+def column_maker(l, start, zindexer, col_height, col_width,
                  func_obj, color_func, COLOR):
     res = []
-    star_index = indexer(start, mn, diff, col_height)
+    start_index = zindexer(start)
     for i in range(col_height):
         res.append("")
     for num in l:
-        ind = indexer(num, mn, diff, col_height)
+        ind = zindexer(num)
         for j in range(col_height):
             zing = ""
             if j == ind:
                 zing = (color_func(num, start, COLOR),
                         func_obj.equal(num, col_width),
                         COLOR.clear)
-            elif j > ind and j <= star_index:
+            elif j > ind and j <= start_index:
                 zing = (color_func(num, start, COLOR),
                         func_obj.above(num, col_width),
                         COLOR.clear)
-            elif j < ind and j >= star_index:
+            elif j < ind and j >= start_index:
                 zing = (color_func(num, start, COLOR),
                         func_obj.below(num, col_width),
                         COLOR.clear)
@@ -75,7 +76,6 @@ def column_maker(l, start, mn, diff, col_height, col_width,
     return res
 
 
-#  def label_formatter(ll, col_width, format_func=lambda x: str(x), *fargs):
 def label_formatter(ll, col_width, format_func, color_func, COLOR, *fargs):
     checks, formatted = [], []
     test = lambda x: x % 2 == 0
@@ -98,16 +98,10 @@ def wrapper_label(ll, col_width, format_func=lambda x: str(x), *fargs):
 
 def scale_formatter(high, low, height, max_width, format_func=lambda x: str(x),
                     right_string=' | ', *fargs):
-    #  import sys
-    #  home_dir = '/usr/self/weather/'
-    #  if home_dir not in sys.path:
-        #  sys.path.append(home_dir)
-    #  import utils.utilities as utils
     distance = (high - low) / height
     collected, res = [], []
     for ind in range(height):
         collected.append(format_func(high - (distance * ind), *fargs))
-    #  longest = utils.max_len(collected)
     for itm in collected:
         res.append("{:>{wid}}{}".format(str(itm), right_string, wid=max_width))
     return res
