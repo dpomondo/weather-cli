@@ -96,20 +96,20 @@ def wrapper_label(ll, col_width, format_func=lambda x: str(x), *fargs):
     return label_formatter(ll, col_width, format_func=lambda x: str(x), *fargs)
 
 
-def scale_formatter(high, low, height, format_func=lambda x: str(x),
+def scale_formatter(high, low, height, max_width, format_func=lambda x: str(x),
                     right_string=' | ', *fargs):
-    import sys
-    home_dir = '/usr/self/weather/'
-    if home_dir not in sys.path:
-        sys.path.append(home_dir)
-    import utils.utilities as utils
+    #  import sys
+    #  home_dir = '/usr/self/weather/'
+    #  if home_dir not in sys.path:
+        #  sys.path.append(home_dir)
+    #  import utils.utilities as utils
     distance = (high - low) / height
     collected, res = [], []
     for ind in range(height):
         collected.append(format_func(high - (distance * ind), *fargs))
-    longest = utils.max_len(collected)
+    #  longest = utils.max_len(collected)
     for itm in collected:
-        res.append("{:>{wid}}{}".format(str(itm), right_string, wid=longest))
+        res.append("{:>{wid}}{}".format(str(itm), right_string, wid=max_width))
     return res
 
 
@@ -194,25 +194,28 @@ def main(verbose=True):
     # start the parsing (this is the part that will get put into the wrapper
     # function)
     full = opened[target_keys[0]]
-    scale = scale_formatter(max(full), min(full), col_height, 
+    scale = scale_formatter(max(full), min(full), col_height,
+                            utils.max_len(map(str, full)),
                             format_func=lambda x: str(int(x)))
-    parsed = full[:(width - len(scale[0]))//col_width]
+    #  parsed = full[:(width - len(scale[0]))//col_width]
     if verbose:
-        print(", which has {} items".format(len(parsed)))
+        print(", which has {} items".format(len(full)))
     #  start = 0 if random.random() < 0.5 else None
     start = None
-    cols, st_ind = new_cols_formatter(parsed,
-                                     start,
-                                     funcs,
-                                     #  lambda x, y, z: '',
-                                     cf.bar_temp_color,
-                                     COLOR,
-                                     col_height=col_height,
-                                     col_width=col_width)
+    #  cols, st_ind = new_cols_formatter(parsed,
+    cols, st_ind = new_cols_formatter(full[:((width//col_width) - 2)],
+                                      start,
+                                      funcs,
+                                      #  lambda x, y, z: '',
+                                      cf.bar_temp_color,
+                                      COLOR,
+                                      col_height=col_height,
+                                      col_width=col_width)
 
     # make the labels
     epochs = opened[target_keys[1]]
-    date_labels = label_formatter(epochs[:(width - len(scale[0]))//col_width],
+    date_labels = label_formatter(epochs[:((width//col_width) - 2)],
+    #  date_labels = label_formatter(epochs[:(width - len(scale[0]))//col_width],
                                   col_width, date_func,
                                   cf.new_alternating_bg, COLOR)
 
