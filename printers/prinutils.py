@@ -10,7 +10,7 @@
 def indexer_maker(mn, mx, height):
     def indexer(_x):
         if height > 1 and mx - mn > 0:
-            return (height - 1) - int((_x - mn) / (mx - mn) * height - 1)
+            return (height - 1) - int((_x - mn) / (mx - mn) * (height - 1))
         else:
             return 0
     return indexer
@@ -55,7 +55,7 @@ def column_maker(l, start, zindexer, col_height, col_width,
     for num in l:
         ind = zindexer(num)
         for j in range(col_height):
-            zing = ""
+            #  zing = ""
             if j == ind:
                 zing = (color_func(num, start, COLOR),
                         func_obj.equal(num, col_width),
@@ -105,13 +105,6 @@ def scale_formatter(high, low, height, max_width, format_func=lambda x: str(x),
     for itm in collected:
         res.append("{:>{wid}}{}".format(str(itm), right_string, wid=max_width))
     return res
-
-
-def new_column_maker(l, start, mn, diff, col_height, col_width,
-                     func_obj, color_func, COLOR):
-    res = []
-    for num in l:
-        pass
 
 
 def single_column(num, target, func_obj, color_func, height, width):
@@ -194,8 +187,8 @@ def main(verbose=True):
     #  parsed = full[:(width - len(scale[0]))//col_width]
     if verbose:
         print(", which has {} items".format(len(full)))
-    #  start = 0 if random.random() < 0.5 else None
-    start = None
+    start = 0 if random.random() < 0.5 else None
+    #  start = None
     #  cols, st_ind = new_cols_formatter(parsed,
     cols, st_ind = new_cols_formatter(full[:((width//col_width) - 2)],
                                       start,
