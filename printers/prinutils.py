@@ -20,39 +20,49 @@ def dict_to_obj(dic):
     class Empty():
         pass
     temp = Empty()
-    for key in func_obj:
-        setattr(temp, key, func_obj[key])
-    func_obj = temp
-    return func_obj
+    for key in dic:
+        setattr(temp, key, dic[key])
+    return temp
 
 
-def newer_cols_formatter(l, l2, start, func_obj, color_func, COLOR,
+def newer_cols_formatter(l, l2, start, func_obj, COLOR,
                          col_height=11, col_width=6):
-    # get the func_obj into shape:
+    # important screen info!
+    import sys
+    home_dir = '/usr/self/weather/'
+    if home_dir not in sys.path:
+        sys.path.append(home_dir)
+    import utils.utilities as utils
+    screen_width = utils.get_terminal_width()
+    screen_height = utils.get_terminal_height()
+
+    # massage the func_obj into shape:
     if isinstance(func_obj, dict):
         func_obj = dict_to_obj(func_obj)
-    func_obj_defaults = {'scale_format':    lambda x: str(x),
-                         'right_string':    '| ',
-                         'fargs':           [],
-                         'label_fargs':     []}
+    func_obj_defaults = {'scale_format':        lambda x: str(x),
+                         'right_string':        '| ',
+                         'fargs':               [],
+                         'label_fargs':         [],
+                         'color_func':          '',
+                         'label_color_func':    ''}
     for key in func_obj_defaults:
         if not hasattr(func_obj, key):
             setattr(func_obj, key, func_obj_defaults[key])
 
     if start is None:
         start = l[0]
-    mx, mn = max(l2), min(l2)
+    mx, mn = max(l), min(l)
     zindexer = indexer_maker(mn, mx, col_height)
     #TODO: get screen width and height (utils.get_terminal_width etc)
     #      limit l and l2 depending on col_width into screen width
-    cols = column_maker(l,
+    cols = column_maker(l[:((screen_width//col_width) - 2)],
                         start, zindexer, col_height, col_width,
-                        func_obj, color_func, COLOR)
+                        func_obj, func_obj.color_func, COLOR)
     scale = scale_formatter(mx, mn, col_height, col_width,
                             func_obj.scale_format,
                             func_obj.right_string,
                             *func_obj.fargs)
-    labels = label_formatter(l2, 
+    labels = label_formatter(l2[:((screen_width//col_width) - 2)], 
                              col_width,
                              func_obj.label_func,
                              func_obj.label_color_func,
@@ -198,6 +208,7 @@ def main(verbose=True):
     # make the passed-in objects
     col_width=5
     col_height=20
+    COLOR = utils.get_colors()
     funcs = {}
     funcs['above'] = lambda x, y: "{}{}{}".format(' ', '+' * (y - 2), ' ')
     funcs['equal'] = lambda x, y: str(x)[:y]
@@ -205,12 +216,13 @@ def main(verbose=True):
     target_keys = []
     target_keys.append(('current_observation', 'temp_f'))
     target_keys.append(('current_observation', 'observation_epoch'))
-    COLOR = utils.get_colors()
     def date_func(zed):
         temp = dt.datetime.fromtimestamp(int(zed))
         return temp.strftime('%H:%M')
+    funcs['color_func'] = cf.bar_temp_color
     funcs['label_func'] = date_func
-    func['label_color_func'] = cf.new_alternating_bg
+    funcs['label_color_func'] = cf.new_alternating_bg
+    funcs['scale_format'] = lambda x: str(round(x, 1))
 
     # choose the random file
     fils = fu.list_dir(verbose)
@@ -221,36 +233,13 @@ def main(verbose=True):
         print("opening {}".format(target), end="")
     opened = fu.parse_database(target, target_keys)
 
-    # start the parsing (this is the part that will get put into the wrapper
-    # function)
     full = opened[target_keys[0]]
-    scale = scale_formatter(max(full), min(full), col_height,
-                            utils.max_len(map(str, full)),
-                            format_func=lambda x: str(int(x)))
-    #  parsed = full[:(width - len(scale[0]))//col_width]
+    epochs = opened[target_keys[1]]
+    start = 0 if random.random() < 0.5 else None
+    res = newer_cols_formatter(full, epochs, start, funcs, COLOR,
+                               col_height=11, col_width=6)
     if verbose:
         print(", which has {} items".format(len(full)))
-    start = 0 if random.random() < 0.5 else None
-    #  start = None
-    #  cols, st_ind = new_cols_formatter(parsed,
-    cols, st_ind = new_cols_formatter(full[:((width//col_width) - 2)],
-                                      start,
-                                      funcs,
-                                      #  lambda x, y, z: '',
-                                      cf.bar_temp_color,
-                                      COLOR,
-                                      col_height=col_height,
-                                      col_width=col_width)
-
-    # make the labels
-    epochs = opened[target_keys[1]]
-    date_labels = label_formatter(epochs[:((width//col_width) - 2)],
-    #  date_labels = label_formatter(epochs[:(width - len(scale[0]))//col_width],
-                                  col_width, date_func,
-                                  cf.new_alternating_bg, COLOR)
-
-    # print the result
-    res = join_all(cols, scale, date_labels)
     for lin in res:
         print(lin)
 
