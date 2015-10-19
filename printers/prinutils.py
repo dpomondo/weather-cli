@@ -16,6 +16,52 @@ def indexer_maker(mn, mx, height):
     return indexer
 
 
+def dict_to_obj(dic):
+    class Empty():
+        pass
+    temp = Empty()
+    for key in func_obj:
+        setattr(temp, key, func_obj[key])
+    func_obj = temp
+    return func_obj
+
+
+def newer_cols_formatter(l, l2, start, func_obj, color_func, COLOR,
+                         col_height=11, col_width=6):
+    # get the func_obj into shape:
+    if isinstance(func_obj, dict):
+        func_obj = dict_to_obj(func_obj)
+    func_obj_defaults = {'scale_format':    lambda x: str(x),
+                         'right_string':    '| ',
+                         'fargs':           [],
+                         'label_fargs':     []}
+    for key in func_obj_defaults:
+        if not hasattr(func_obj, key):
+            setattr(func_obj, key, func_obj_defaults[key])
+
+    if start is None:
+        start = l[0]
+    mx, mn = max(l2), min(l2)
+    zindexer = indexer_maker(mn, mx, col_height)
+    #TODO: get screen width and height (utils.get_terminal_width etc)
+    #      limit l and l2 depending on col_width into screen width
+    cols = column_maker(l,
+                        start, zindexer, col_height, col_width,
+                        func_obj, color_func, COLOR)
+    scale = scale_formatter(mx, mn, col_height, col_width,
+                            func_obj.scale_format,
+                            func_obj.right_string,
+                            *func_obj.fargs)
+    labels = label_formatter(l2, 
+                             col_width,
+                             func_obj.label_func,
+                             func_obj.label_color_func,
+                             COLOR,
+                             *func_obj.label_fargs)
+    res = join_all(cols, scale, labels)
+    return res
+
+
 def new_cols_formatter(l, start, func_obj, color_func, COLOR,
                        col_height=11, col_width=6):
     """ formats a list of strings, based on an input list.
@@ -30,13 +76,8 @@ def new_cols_formatter(l, start, func_obj, color_func, COLOR,
     """
     # convert a passed-in dict to a holder object
     if isinstance(func_obj, dict):
-        class Empty():
-            pass
-        temp = Empty()
-        for key in func_obj:
-            setattr(temp, key, func_obj[key])
-        func_obj = temp
-    #  res = []
+        func_obj = dict_to_obj(func_obj)
+
     if start is None:
         start = l[0]
     mx, mn = max(l), min(l)
@@ -168,6 +209,8 @@ def main(verbose=True):
     def date_func(zed):
         temp = dt.datetime.fromtimestamp(int(zed))
         return temp.strftime('%H:%M')
+    funcs['label_func'] = date_func
+    func['label_color_func'] = cf.new_alternating_bg
 
     # choose the random file
     fils = fu.list_dir(verbose)
