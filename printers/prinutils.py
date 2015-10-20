@@ -51,7 +51,11 @@ def newer_cols_formatter(l, l2, start, func_obj, COLOR,
 
     if start is None:
         start = l[0]
-    mx, mn = max(l), min(l)
+    if hasattr(func_obj, 'scale_max') and hasattr(func_obj, 'scale_min'):
+        mx = func_obj.scale_max(max(l))
+        mn = func_obj.scale_min(min(l))
+    else:
+        mx, mn = max(l), min(l)
     zindexer = indexer_maker(mn, mx, col_height)
     #TODO: get screen width and height (utils.get_terminal_width etc)
     #      limit l and l2 depending on col_width into screen width
@@ -149,7 +153,7 @@ def wrapper_label(ll, col_width, format_func=lambda x: str(x), *fargs):
 
 def scale_formatter(high, low, height, max_width, format_func=lambda x: str(x),
                     right_string=' | ', *fargs):
-    distance = (high - low) / height
+    distance = (high - low) / (height - 1)
     collected, res = [], []
     for ind in range(height):
         collected.append(format_func(high - (distance * ind), *fargs))
@@ -209,20 +213,26 @@ def main(verbose=True):
     col_width=5
     col_height=20
     COLOR = utils.get_colors()
-    funcs = {}
-    funcs['above'] = lambda x, y: "{}{}{}".format(' ', '+' * (y - 2), ' ')
-    funcs['equal'] = lambda x, y: str(x)[:y]
-    funcs['below'] = lambda x, y: "{}{}{}".format(' ', '-' * (y - 2), ' ')
     target_keys = []
     target_keys.append(('current_observation', 'temp_f'))
     target_keys.append(('current_observation', 'observation_epoch'))
     def date_func(zed):
         temp = dt.datetime.fromtimestamp(int(zed))
         return temp.strftime('%H:%M')
+    def scale_min(x):
+        return int(x - (x % 10))
+    def scale_max(x):
+        return int(x + (10 - (x % 10)))
+    funcs = {}
+    funcs['above'] = lambda x, y: "{}{}{}".format(' ', '+' * (y - 2), ' ')
+    funcs['equal'] = lambda x, y: str(x)[:y]
+    funcs['below'] = lambda x, y: "{}{}{}".format(' ', '-' * (y - 2), ' ')
     funcs['color_func'] = cf.bar_temp_color
     funcs['label_func'] = date_func
     funcs['label_color_func'] = cf.new_alternating_bg
     funcs['scale_format'] = lambda x: str(round(x, 1))
+    funcs['scale_max'] = scale_max
+    funcs['scale_min'] = scale_min
 
     # choose the random file
     fils = fu.list_dir(verbose)
