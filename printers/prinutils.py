@@ -26,7 +26,7 @@ def dict_to_obj(dic):
 
 
 def newer_cols_formatter(l, l2, start, func_obj, COLOR,
-                         col_height=11, col_width=6):
+                         col_height=19, col_width=6):
     # important screen info!
     import sys
     home_dir = '/usr/self/weather/'
@@ -66,12 +66,13 @@ def newer_cols_formatter(l, l2, start, func_obj, COLOR,
                             func_obj.scale_format,
                             func_obj.right_string,
                             *func_obj.fargs)
-    labels = label_formatter(l2[:((screen_width//col_width) - 2)], 
-                             col_width,
-                             func_obj.label_func,
-                             func_obj.label_color_func,
-                             COLOR,
-                             *func_obj.label_fargs)
+    labels = func_obj.label_formatter(l2[:((screen_width//col_width) - 2)], 
+                                      col_width,
+                                      func_obj.label_func,
+                                      func_obj.label_color_func,
+                                      func_obj.label_test_func,
+                                      COLOR,
+                                      *func_obj.label_fargs)
     res = join_all(cols, scale, labels)
     return res
 
@@ -131,24 +132,27 @@ def column_maker(l, start, zindexer, col_height, col_width,
     return res
 
 
-def label_formatter(ll, col_width, format_func, color_func, COLOR, *fargs):
+def label_formatter(ll, col_width, format_func, color_func, test_func,
+                    COLOR, skip=1, *fargs):
     checks, formatted = [], []
-    test = lambda x: x % 2 == 0
+    #  test = lambda x: x % 2 == 0
+    width_test = format_func(ll[0], *fargs)
+    while len(str(width_test)) > col_width * skip:
+        skip += 1
     for ind in range(len(ll)):
         checks.append('{:-^{wid}}'.format('+', wid=col_width))
         temp = format_func(ll[ind], *fargs)
-        formatted.append('{}{:^{wid}}{}'.format(color_func(test, COLOR, ind),
-                                                str(temp)[:col_width],
-                                                COLOR.clear,
-                                                wid=col_width))
+        if (ind + 1) % skip == 0:
+            formatted.append('{}{:^{wid}}{}'.format(color_func(test_func, COLOR,
+                                                               ind),
+                                                    #  str(temp)[:col_width],
+                                                    str(temp),
+                                                    COLOR.clear,
+                                                    wid=col_width * skip))
     res = []
     res.append(''.join(checks))
     res.append(''.join(formatted))
     return res
-
-
-def wrapper_label(ll, col_width, format_func=lambda x: str(x), *fargs):
-    return label_formatter(ll, col_width, format_func=lambda x: str(x), *fargs)
 
 
 def scale_formatter(high, low, height, max_width, format_func=lambda x: str(x),
@@ -230,6 +234,8 @@ def main(verbose=True):
     funcs['color_func'] = cf.bar_temp_color
     funcs['label_func'] = date_func
     funcs['label_color_func'] = cf.new_alternating_bg
+    funcs['label_test_func'] = lambda x: x % 2 == 0
+    funcs['label_formatter'] = label_formatter
     funcs['scale_format'] = lambda x: str(round(x, 1))
     funcs['scale_max'] = scale_max
     funcs['scale_min'] = scale_min
@@ -247,7 +253,8 @@ def main(verbose=True):
     epochs = opened[target_keys[1]]
     start = 0 if random.random() < 0.5 else None
     res = newer_cols_formatter(full, epochs, start, funcs, COLOR,
-                               col_height=11, col_width=6)
+                               col_height=col_height,
+                               col_width=col_width)
     if verbose:
         print(", which has {} items".format(len(full)))
     for lin in res:
