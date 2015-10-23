@@ -25,6 +25,19 @@ def dict_to_obj(dic):
     return temp
 
 
+def clean_by_hours(lis, tups=True):
+    """ takes a list index by hour, returns 24 averaged houlry observations.
+
+        lis:    list of tuples, with observation and time index
+        tups:   False:  return a list of 24 averaged observations
+                True:   return a list of 24 tuples with averaged observations
+                        and time indexes
+        """
+    import datetime as dt
+    hours = []
+    for i in range(24):
+        hours.append(dt.time(hour=i))
+
 def newer_cols_formatter(l, l2, start, func_obj, COLOR,
                          col_height=19, col_width=6):
     # important screen info!
@@ -134,7 +147,8 @@ def column_maker(l, start, zindexer, col_height, col_width,
 
 def label_formatter(ll, col_width, format_func, color_func, test_func,
                     COLOR, skip=1, *fargs):
-    checks, formatted = [], []
+#  def label_formatter(ll, col_width, func_obj, COLOR, skip=1, *fargs):
+    checks, label = [], []
     #  test = lambda x: x % 2 == 0
     width_test = format_func(ll[0], *fargs)
     while len(str(width_test)) > col_width * skip:
@@ -143,16 +157,31 @@ def label_formatter(ll, col_width, format_func, color_func, test_func,
         checks.append('{:-^{wid}}'.format('+', wid=col_width))
         temp = format_func(ll[ind], *fargs)
         if (ind + 1) % skip == 0:
-            formatted.append('{}{:^{wid}}{}'.format(color_func(test_func, COLOR,
-                                                               ind),
-                                                    #  str(temp)[:col_width],
-                                                    str(temp),
-                                                    COLOR.clear,
-                                                    wid=col_width * skip))
+            label.append('{}{:^{wid}}{}'.format(color_func(test_func, COLOR,
+                                                           ind),
+                                                #  str(temp)[:col_width],
+                                                str(temp),
+                                                COLOR.clear,
+                                                wid=col_width * skip))
     res = []
     res.append(''.join(checks))
-    res.append(''.join(formatted))
+    res.append(''.join(label))
     return res
+
+
+def multiline_label(ll, col_width, format_func, color_func, test_func,
+                    COLOR, max_lines=4, *fargs):
+    skip = 1
+    formatted = []
+    for i in range(len(ll)):
+        formatted.append((color_func(test_func, COLOR, i),
+                          format_func(ll[i], *fargs),
+                          COLOR.clear))
+    while len(formatted[0][1]) > col_width * skip:
+        skip += 1
+    if skip > max_lines:
+        raise ValueError("Passed-in labels too long for formatting")
+    ## TODO: finish the function...
 
 
 def scale_formatter(high, low, height, max_width, format_func=lambda x: str(x),
