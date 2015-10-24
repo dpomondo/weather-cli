@@ -9,7 +9,9 @@
 
 def indexer_maker(mn, mx, height):
     def indexer(_x):
-        if height > 1 and mx - mn > 0:
+        if _x is None:
+            return None
+        elif height > 1 and mx - mn > 0:
             return (height - 1) - int((_x - mn) / (mx - mn) * (height - 1))
         else:
             return 0
@@ -25,18 +27,37 @@ def dict_to_obj(dic):
     return temp
 
 
-def clean_by_hours(lis, tups=True):
+def clean_by_hours(obs, times, tups=True):
     """ takes a list index by hour, returns 24 averaged houlry observations.
 
-        lis:    list of tuples, with observation and time index
+        obs:    list of numbers (ints or floats)
+        times:  list of datetimes
         tups:   False:  return a list of 24 averaged observations
                 True:   return a list of 24 tuples with averaged observations
                         and time indexes
         """
+    assert len(obs) == len(times), "clean_by_hours passed two unequal lists"
     import datetime as dt
-    hours = []
+    from collections import defaultdict
+    hours, res = [], []
+    collected = defaultdict(list)
     for i in range(24):
         hours.append(dt.time(hour=i))
+    for ind in range(len(obs)):
+        collected[dt.time(hour=times[ind].hour)].append(obs[ind])
+    for h in hours:
+        temp = len(collected[h])
+        if temp == 0:
+            res.append(None)
+        elif temp == 1:
+            res.append(collected[h][0])
+        else:
+            res.append(sum(collected[h]) / temp)
+    if tups is True:
+        return list(zip(res, hours))
+    else:
+        return res
+
 
 def newer_cols_formatter(l, l2, start, func_obj, COLOR,
                          col_height=19, col_width=6):
@@ -63,12 +84,16 @@ def newer_cols_formatter(l, l2, start, func_obj, COLOR,
             setattr(func_obj, key, func_obj_defaults[key])
 
     if start is None:
-        start = l[0]
+        if l[0] is not None:
+            start = l[0]
+        else:
+            start = 0
     if hasattr(func_obj, 'scale_max') and hasattr(func_obj, 'scale_min'):
-        mx = func_obj.scale_max(max(l))
-        mn = func_obj.scale_min(min(l))
+        mx = func_obj.scale_max(max(list(z for z in l if z is not None)))
+        mn = func_obj.scale_min(min(list(z for z in l if z is not None)))
     else:
-        mx, mn = max(l), min(l)
+        mx = max(list(z for z in l if z is not None))
+        mn = min(list(z for z in l if z is not None))
     zindexer = indexer_maker(mn, mx, col_height)
     #TODO: get screen width and height (utils.get_terminal_width etc)
     #      limit l and l2 depending on col_width into screen width
@@ -118,14 +143,22 @@ def new_cols_formatter(l, start, func_obj, color_func, COLOR,
 def column_maker(l, start, zindexer, col_height, col_width,
                  func_obj, color_func, COLOR):
     res = []
-    start_index = zindexer(start)
+    if start is not None:
+        start_index = zindexer(start)
+    else:
+        start_index = 0
     for i in range(col_height):
         res.append("")
     for num in l:
-        ind = zindexer(num)
+        if num is not None:
+            ind = zindexer(num)
+        else:
+            ind = None
         for j in range(col_height):
             #  zing = ""
-            if j == ind:
+            if ind is None:
+                zing = ('', ' ' * col_width, '')
+            elif j == ind:
                 zing = (color_func(num, start, COLOR),
                         func_obj.equal(num, col_width),
                         COLOR.clear)
@@ -250,8 +283,10 @@ def main(verbose=True):
     target_keys.append(('current_observation', 'temp_f'))
     target_keys.append(('current_observation', 'observation_epoch'))
     def date_func(zed):
-        temp = dt.datetime.fromtimestamp(int(zed))
-        return temp.strftime('%H:%M')
+        #  if not isinstance(zed, dt.datetime) or not isinstance(zed, dt.time):
+            #  temp = dt.datetime.fromtimestamp(int(zed))
+        #  return temp.strftime('%H:%M')
+        return zed.strftime('%H:%M')
     def scale_min(x):
         return int(x - (x % 10))
     def scale_max(x):
@@ -278,8 +313,20 @@ def main(verbose=True):
         print("opening {}".format(target), end="")
     opened = fu.parse_database(target, target_keys)
 
-    full = opened[target_keys[0]]
-    epochs = opened[target_keys[1]]
+    import datetime
+    zepochs = list(map(lambda x: datetime.datetime.fromtimestamp(int(x)),
+                       opened[target_keys[1]]))
+    cleaned = clean_by_hours(opened[target_keys[0]], zepochs)
+    #  full = opened[target_keys[0]]
+    #  epochs = opened[target_keys[1]]
+    full = list(z[0] for z in cleaned)
+    epochs = list(z[1] for z in cleaned)
+    print("Full:\n", full)
+    print("Max of full: ", max(list(z for z in full if z is not None)))
+    print("printing epochs...\n", epochs)
+    #  import datetime
+    #  epochs = list(map(epochs,
+                      #  lambda x: datetime.datetime.fromtimestamp(int(x))))
     start = 0 if random.random() < 0.5 else None
     res = newer_cols_formatter(full, epochs, start, funcs, COLOR,
                                col_height=col_height,
