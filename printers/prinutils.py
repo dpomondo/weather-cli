@@ -68,7 +68,7 @@ def newer_cols_formatter(l, l2, start, func_obj, COLOR,
         sys.path.append(home_dir)
     import utils.utilities as utils
     screen_width = utils.get_terminal_width()
-    #  screen_height = utils.get_terminal_height()
+    screen_height = utils.get_terminal_height()
 
     # massage the func_obj into shape:
     if isinstance(func_obj, dict):
@@ -84,10 +84,6 @@ def newer_cols_formatter(l, l2, start, func_obj, COLOR,
             setattr(func_obj, key, func_obj_defaults[key])
 
     if start is None:
-        #  if l[0] is not None:
-            #  start = l[0]
-        #  else:
-            #  start = 0
         ind = 0
         while l[ind] is None:
             ind += 1
@@ -98,6 +94,9 @@ def newer_cols_formatter(l, l2, start, func_obj, COLOR,
     else:
         mx = max(list(z for z in l if z is not None))
         mn = min(list(z for z in l if z is not None))
+
+    col_height = min(col_height, screen_height - 4)
+
     zindexer = indexer_maker(mn, mx, col_height)
     # TODO:     get screen width and height (utils.get_terminal_width etc)
     #           limit l and l2 depending on col_width into screen width
@@ -108,7 +107,7 @@ def newer_cols_formatter(l, l2, start, func_obj, COLOR,
                             func_obj.scale_format,
                             func_obj.right_string,
                             *func_obj.fargs)
-    labels = func_obj.label_formatter(l2[:((screen_width//col_width) - 2)],
+    labels = func_obj.label_formatter(l2[:((screen_width//col_width) - 2)], 
                                       col_width,
                                       func_obj.label_func,
                                       func_obj.label_color_func,
@@ -267,13 +266,10 @@ def join_all(cols, scale, labels):
 
 def day_temps_formatter(temps, times):
     import sys
-    #  import random
     import datetime as dt
-    #  import math
     home_dir = '/usr/self/weather/'
     if home_dir not in sys.path:
         sys.path.append(home_dir)
-    #  import utils.file_utils as fu
     import utils.utilities as utils
     import printers.colorfuncs as cf
     width = utils.get_terminal_width()
@@ -289,14 +285,11 @@ def day_temps_formatter(temps, times):
         else:
             temp = dt.datetime.fromtimestamp(int(zed))
         return temp.strftime('%H:%M')
-        #  return zed.strftime('%H:%M')
 
     def scale_min(x):
-        #  return math.floor(x)
         return int(x - (x % 10))
 
     def scale_max(x):
-        #  return math.ceil(x)
         return int(x + (10 - (x % 10)))
 
     funcs = {}
