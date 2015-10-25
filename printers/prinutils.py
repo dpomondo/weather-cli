@@ -68,7 +68,7 @@ def newer_cols_formatter(l, l2, start, func_obj, COLOR,
         sys.path.append(home_dir)
     import utils.utilities as utils
     screen_width = utils.get_terminal_width()
-    screen_height = utils.get_terminal_height()
+    #  screen_height = utils.get_terminal_height()
 
     # massage the func_obj into shape:
     if isinstance(func_obj, dict):
@@ -84,10 +84,14 @@ def newer_cols_formatter(l, l2, start, func_obj, COLOR,
             setattr(func_obj, key, func_obj_defaults[key])
 
     if start is None:
-        if l[0] is not None:
-            start = l[0]
-        else:
-            start = 0
+        #  if l[0] is not None:
+            #  start = l[0]
+        #  else:
+            #  start = 0
+        ind = 0
+        while l[ind] is None:
+            ind += 1
+        start = l[ind]
     if hasattr(func_obj, 'scale_max') and hasattr(func_obj, 'scale_min'):
         mx = func_obj.scale_max(max(list(z for z in l if z is not None)))
         mn = func_obj.scale_min(min(list(z for z in l if z is not None)))
@@ -95,8 +99,8 @@ def newer_cols_formatter(l, l2, start, func_obj, COLOR,
         mx = max(list(z for z in l if z is not None))
         mn = min(list(z for z in l if z is not None))
     zindexer = indexer_maker(mn, mx, col_height)
-    #TODO: get screen width and height (utils.get_terminal_width etc)
-    #      limit l and l2 depending on col_width into screen width
+    # TODO:     get screen width and height (utils.get_terminal_width etc)
+    #           limit l and l2 depending on col_width into screen width
     cols = column_maker(l[:((screen_width//col_width) - 2)],
                         start, zindexer, col_height, col_width,
                         func_obj, func_obj.color_func, COLOR)
@@ -104,7 +108,7 @@ def newer_cols_formatter(l, l2, start, func_obj, COLOR,
                             func_obj.scale_format,
                             func_obj.right_string,
                             *func_obj.fargs)
-    labels = func_obj.label_formatter(l2[:((screen_width//col_width) - 2)], 
+    labels = func_obj.label_formatter(l2[:((screen_width//col_width) - 2)],
                                       col_width,
                                       func_obj.label_func,
                                       func_obj.label_color_func,
@@ -180,9 +184,7 @@ def column_maker(l, start, zindexer, col_height, col_width,
 
 def label_formatter(ll, col_width, format_func, color_func, test_func,
                     COLOR, skip=1, *fargs):
-#  def label_formatter(ll, col_width, func_obj, COLOR, skip=1, *fargs):
     checks, label = [], []
-    #  test = lambda x: x % 2 == 0
     width_test = format_func(ll[0], *fargs)
     while len(str(width_test)) > col_width * skip:
         skip += 1
@@ -214,7 +216,7 @@ def multiline_label(ll, col_width, format_func, color_func, test_func,
         skip += 1
     if skip > max_lines:
         raise ValueError("Passed-in labels too long for formatting")
-    ## TODO: finish the function...
+    # TODO: finish the function...
 
 
 def scale_formatter(high, low, height, max_width, format_func=lambda x: str(x),
@@ -259,38 +261,44 @@ def join_all(cols, scale, labels):
     for ind in range(len(cols)):
         res.append("{}{}".format(scale[ind], cols[ind]))
     for ind in range(len(labels)):
-        #  date_labels[ind] = '{}{}'.format(' ' * len(scale[0]), date_labels[ind])
         res.append('{}{}'.format(' ' * len(scale[0]), labels[ind]))
     return res
 
-def main(verbose=True):
+
+def day_temps_formatter(temps, times):
     import sys
-    import random
+    #  import random
     import datetime as dt
+    #  import math
     home_dir = '/usr/self/weather/'
     if home_dir not in sys.path:
         sys.path.append(home_dir)
-    import utils.file_utils as fu
+    #  import utils.file_utils as fu
     import utils.utilities as utils
     import printers.colorfuncs as cf
     width = utils.get_terminal_width()
 
     # make the passed-in objects
-    col_width=5
-    col_height=20
+    col_width = min(5, width // 25)
+    col_height = 20
     COLOR = utils.get_colors()
-    target_keys = []
-    target_keys.append(('current_observation', 'temp_f'))
-    target_keys.append(('current_observation', 'observation_epoch'))
+
     def date_func(zed):
-        #  if not isinstance(zed, dt.datetime) or not isinstance(zed, dt.time):
-            #  temp = dt.datetime.fromtimestamp(int(zed))
-        #  return temp.strftime('%H:%M')
-        return zed.strftime('%H:%M')
+        if isinstance(zed, dt.datetime) or isinstance(zed, dt.time):
+            temp = zed
+        else:
+            temp = dt.datetime.fromtimestamp(int(zed))
+        return temp.strftime('%H:%M')
+        #  return zed.strftime('%H:%M')
+
     def scale_min(x):
+        #  return math.floor(x)
         return int(x - (x % 10))
+
     def scale_max(x):
+        #  return math.ceil(x)
         return int(x + (10 - (x % 10)))
+
     funcs = {}
     funcs['above'] = lambda x, y: "{}{}{}".format(' ', '+' * (y - 2), ' ')
     funcs['equal'] = lambda x, y: str(x)[:y]
@@ -304,35 +312,46 @@ def main(verbose=True):
     funcs['scale_max'] = scale_max
     funcs['scale_min'] = scale_min
 
+    # clean the input lists
+    zepochs = list(map(lambda x: dt.datetime.fromtimestamp(int(x)), times))
+    #  cleaned = clean_by_hours(opened[target_keys[0]], zepochs)
+    cleaned = clean_by_hours(temps, zepochs)
+    full = list(z[0] for z in cleaned)
+    epochs = list(z[1] for z in cleaned)
+
+    # call the wrapped func
+    return newer_cols_formatter(full, epochs, None, funcs, COLOR,
+                                col_height=col_height,
+                                col_width=col_width)
+
+
+def main(verbose=True):
+    import sys
+    import random
+    #  import datetime as dt
+    home_dir = '/usr/self/weather/'
+    if home_dir not in sys.path:
+        sys.path.append(home_dir)
+    import utils.file_utils as fu
+    #  import utils.utilities as utils
+    #  import printers.colorfuncs as cf
+    #  width = utils.get_terminal_width()
+
+    # keys for parsing the random file
+    target_keys = []
+    target_keys.append(('current_observation', 'temp_f'))
+    target_keys.append(('current_observation', 'observation_epoch'))
+
     # choose the random file
     fils = fu.list_dir(verbose)
     if verbose:
         print("{} files found...".format(len(fils)))
     target = random.choice(fils)
     if verbose:
-        print("opening {}".format(target), end="")
+        print("opening {}".format(target))
     opened = fu.parse_database(target, target_keys)
 
-    import datetime
-    zepochs = list(map(lambda x: datetime.datetime.fromtimestamp(int(x)),
-                       opened[target_keys[1]]))
-    cleaned = clean_by_hours(opened[target_keys[0]], zepochs)
-    #  full = opened[target_keys[0]]
-    #  epochs = opened[target_keys[1]]
-    full = list(z[0] for z in cleaned)
-    epochs = list(z[1] for z in cleaned)
-    print("Full:\n", full)
-    print("Max of full: ", max(list(z for z in full if z is not None)))
-    print("printing epochs...\n", epochs)
-    #  import datetime
-    #  epochs = list(map(epochs,
-                      #  lambda x: datetime.datetime.fromtimestamp(int(x))))
-    start = 0 if random.random() < 0.5 else None
-    res = newer_cols_formatter(full, epochs, start, funcs, COLOR,
-                               col_height=col_height,
-                               col_width=col_width)
-    if verbose:
-        print(", which has {} items".format(len(full)))
+    res = day_temps_formatter(opened[target_keys[0]], opened[target_keys[1]])
     for lin in res:
         print(lin)
 

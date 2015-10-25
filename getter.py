@@ -135,6 +135,10 @@ def parse_arguments():
                         type=int,
                         help="Limit screen width to given integer"
                         )
+    parser.add_argument('--yesterday',
+                        action='store_true',
+                        help='Prints temperature graph for yesterday'
+                        )
     return parser.parse_args()
 
 
@@ -327,6 +331,24 @@ def main():
                     loop_flag = False
                 elif args.files:
                     raise NotImplementedError
+                elif args.yesterday:
+                    import printers.prinutils as pu
+                    import utils.file_utils as fu
+                    import datetime as dt
+                    tim = dt.date.today() - dt.timedelta(days=1)
+                    target = config.loaders.day_file_name(tim)
+                    target_keys = []
+                    target_keys.append(('current_observation', 'temp_f'))
+                    target_keys.append(('current_observation',
+                                        'observation_epoch'))
+
+                    opened = fu.parse_database(target, target_keys)
+                    res = pu.day_temps_formatter(opened[target_keys[0]],
+                                                 opened[target_keys[1]])
+                    print("Queried Temperatures for {}".format(
+                        tim.strftime('%b %d %y')))
+                    for lin in res:
+                        print(lin)
                 elif args.moon:
                     import printers.moon
                     printers.moon.print_moon(current['moon_phase'])
