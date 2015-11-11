@@ -79,14 +79,8 @@ def get_box_height(formatter, height):
 
 
 def temp_return_format():
-    """ temp function to return list to be parsed by make_formatter func
+    """ temp function to return dict to be parsed by make_formatter func
     """
-    # TODO: return frmt as dict with header and body:
-    #   {'header':['days'],
-    #    'body':['blank', 'date', ... ]}
-    # Also, returning labels and funcs as tuples: ('', 'blank') and
-    # reconstructing the format_list and lable list instead of relying on
-    # coordination
     frmt = {'body':     [('dash', '', 1),
                          ('date', '', 1),
                          ('blank', '', 1),
@@ -98,7 +92,6 @@ def temp_return_format():
                          ('conditions', 'Conditions', 2)
                          #  ('blank', '', 1)
                         ]}
-    #  labels = ['', '', 'High', 'Low', '', ]
     return frmt
 
 
@@ -155,7 +148,7 @@ def make_formatter(frmt_list, COLOR):
         snow = utils.eat_keys(day, ('snow_allday', 'in'))
         return "{}{:^{wid}}{}".format(cf.inch_precip_color((qpf + snow),
                                                            None, COLOR),
-                                      "{} {}".format(qpf+snow, "in"),
+                                      "{:.3} {}".format(qpf+snow, "in"),
                                       COLOR.clear,
                                       wid=box_width)
 
