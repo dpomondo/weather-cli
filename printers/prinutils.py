@@ -96,6 +96,11 @@ def newer_cols_formatter(l, l2, start, func_obj, COLOR,
         mn = min(list(z for z in l if z is not None))
 
     col_height = min(col_height, screen_height - 4)
+    if hasattr(func_obj, 'height_func'):
+        old_col_height = col_height
+        col_height = func_obj.height_func(mn, mx, col_height)
+        if old_col_height != col_height:
+            print("Changed {} to {}".format(old_col_height, col_height))
 
     zindexer = indexer_maker(mn, mx, col_height)
     # TODO:     get screen width and height (utils.get_terminal_width etc)
@@ -276,7 +281,7 @@ def day_temps_formatter(temps, times):
 
     # make the passed-in objects
     col_width = min(5, width // 25)
-    col_height = 20
+    col_height = 21
     COLOR = utils.get_colors()
 
     def date_func(zed):
@@ -288,9 +293,18 @@ def day_temps_formatter(temps, times):
 
     def scale_min(x):
         return int(x - (x % 10))
+        #  return int(x - (x % 5))
 
     def scale_max(x):
+        #  return int(x + (10 - (x % 5)))
         return int(x + (10 - (x % 10)))
+
+    def height_func(mn, mx, col_height):
+        scales = [1, 2.5, 5, 10, 20]
+        ind = 0
+        while ind < len(scales) and (mx - mn) / scales[ind] > (col_height - 1):
+            ind += 1
+        return min(mx - mn // scales[ind - 1], col_height)
 
     funcs = {}
     funcs['above'] = lambda x, y: "{}{}{}".format(' ', '+' * (y - 2), ' ')
@@ -304,6 +318,7 @@ def day_temps_formatter(temps, times):
     funcs['scale_format'] = lambda x: str(round(x, 1))
     funcs['scale_max'] = scale_max
     funcs['scale_min'] = scale_min
+    funcs['height_func'] = height_func
 
     # clean the input lists
     zepochs = list(map(lambda x: dt.datetime.fromtimestamp(int(x)), times))
